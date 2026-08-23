@@ -10,7 +10,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://edufit.nepal'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://edufit.nepal'),
   title: {
     default: 'EduFit Nepal — EdTech Readiness Assessment for Schools',
     template: '%s | EduFit Nepal',
