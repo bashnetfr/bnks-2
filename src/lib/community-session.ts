@@ -13,6 +13,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { createBrowserSupabaseClient } from '@/lib/supabase'
+import { getStaffAuth, getStudentAuth } from '@/lib/auth'
 import {
   loadCommunityData, getUserByEmail,
   type CommunityData, type CommunityUser,
@@ -51,10 +52,29 @@ function identityFromSession(
   if (!role) return null
 
   const isAdmin = meta.community_admin === true
-  const existing = getUserByEmail(data, email)
-  if (existing) return existing
+  return identityFromMember(email, role, isAdmin, data)
+}
 
-  const name = typeof meta.full_name === 'string' && meta.full_name ? meta.full_name : email
+function identityFromMember(
+  email: string,
+  role: 'student' | 'teacher',
+  isAdmin: boolean,
+  data: CommunityData
+): CommunityUser | null {
+  const existing = getUserByEmail(data, email)
+  if (existing && !isAdmin) return existing
+  if (existing && isAdmin) {
+    const adminPersona =
+      data.users.find((u) => u.role === 'admin') ?? existing
+    return { ...adminPersona, id: adminPersona.id }
+  }
+
+  const name =
+    (email.split('@')[0] || 'member')
+      .split(/[._-]+/)
+      .filter(Boolean)
+      .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+      .join(' ') || 'Community member'
   const palette = ['#2563EB', '#16A34A', '#7C3AED', '#0891B2', '#D8322A']
   const color = palette[email.length % palette.length]
   return {
@@ -63,7 +83,7 @@ function identityFromSession(
     email,
     role: isAdmin ? 'admin' : role,
     verificationStatus:
-      role === 'student' ? 'not_applicable' : isAdmin ? 'approved' : 'pending',
+      role === 'student' ? 'not_applicable' : isAdmin ? 'approved' : 'approved',
     subject: '',
     initialsColor: color,
   }

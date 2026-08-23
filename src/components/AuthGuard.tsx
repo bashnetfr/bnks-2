@@ -1,19 +1,27 @@
 'use client'
 
+// ================================================================
+// Unified auth gate — single source of truth: lib/auth.ts session
+// storage (the same keys the /login page writes). Supabase remains
+// wired for DATA (surveys, saved events), not for gating.
+// ================================================================
+
 import { useEffect, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { ShieldCheck } from 'lucide-react'
-import { createBrowserSupabaseClient } from '@/lib/supabase'
+import { getStaffAuth, getStudentAuth } from '@/lib/auth'
 
 export type AppRole = 'teacher' | 'student'
 
-export function roleFromUser(user: { user_metadata?: Record<string, unknown> } | null): AppRole | null {
-  const role = user?.user_metadata?.role
-  return role === 'teacher' || role === 'student' ? role : null
+/** Kept for compatibility — role now resolves from session storage. */
+export function roleFromUser(_user: unknown): AppRole | null {
+  if (getStaffAuth()) return 'teacher'
+  if (getStudentAuth()) return 'student'
+  return null
 }
 
-/** Client-side gate: renders children only for an authenticated member
- *  whose role matches allowedRole. Everyone else ends up at /login. */
+/** Client-side gate: renders children only for a signed-in member whose
+ *  role matches allowedRole. Everyone else ends up at /login. */
 export default function AuthGuard({ allowedRole, children }: { allowedRole?: AppRole; children: ReactNode }) {
   const router = useRouter()
   const [status, setStatus] = useState<'checking' | 'granted'>('checking')
@@ -21,28 +29,30 @@ export default function AuthGuard({ allowedRole, children }: { allowedRole?: App
   useEffect(() => {
     let cancelled = false
 
-    async function checkAccess() {
-      const supabase = createBrowserSupabaseClient()
-      const { data } = await supabase.auth.getSession()
-      if (cancelled) return
+    const auth =
+      allowedRole === 'teacher'
+        ? getStaffAuth()
+        : allowedRole === 'student'
+          ? getStudentAuth()
+          : getStaffAuth() ?? getStudentAuth()
 
-      const session = data.session
-      if (!session) {
-        router.replace('/login')
-        return
-      }
-
-      const role = roleFromUser(session.user)
-      if (!role || (allowedRole && role !== allowedRole)) {
-        await supabase.auth.signOut()
-        if (!cancelled) router.replace('/login?reason=role')
-        return
-      }
-
-      if (!cancelled) setStatus('granted')
+    if (!auth) {
+      if (!cancelled) router.replace('/login')
+      return
     }
 
-    checkAccess()
+    // Wrong-role session: send to login so the portal picker sorts it out.
+    const hasTeacher = Boolean(getStaffAuth())
+    const hasStudent = Boolean(getStudentAuth())
+    const roleMatches =
+      allowedRole === 'teacher' ? hasTeacher : allowedRole === 'student' ? hasStudent : true
+
+    if (!roleMatches) {
+      if (!cancelled) router.replace('/login')
+      return
+    }
+
+    if (!cancelled) setStatus('granted')
     return () => {
       cancelled = true
     }
