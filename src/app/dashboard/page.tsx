@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   LayoutDashboard, School, FileText, CheckCircle2,
   AlertTriangle, HelpCircle, ArrowRight, RefreshCw,
@@ -25,8 +26,16 @@ import type {
 } from '@/lib/types'
 import { computeCompatibility } from '@/lib/scoring'
 import { SAMPLE_EDTECH_TOOLS } from '@/lib/tools'
+import { getDisplayName, getStaffAuth, type StaffAuth } from '@/lib/auth'
+import UserProfileCard from '@/components/UserProfileCard'
 
 export default function DashboardPage() {
+  const router = useRouter()
+
+  // Auth state — staff session-gated via /dashboard/login
+  const [staffAuth, setStaffAuth] = useState<StaffAuth | null>(null)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+
   // Navigation / Tab state
   const [activeTab, setActiveTab] = useState<'profile' | 'assessment' | 'results' | 'surveys'>('profile')
 
@@ -91,6 +100,17 @@ export default function DashboardPage() {
   const [result, setResult] = useState<CompatibilityResult | null>(null)
   const [aiExplanation, setAiExplanation] = useState<ExplanationResult | null>(null)
   const [loadingAi, setLoadingAi] = useState<boolean>(false)
+
+  // Gate access: redirect to staff login if no session exists
+  useEffect(() => {
+    const auth = getStaffAuth()
+    if (!auth) {
+      router.replace('/login')
+      return
+    }
+    setStaffAuth(auth)
+    setIsCheckingAuth(false)
+  }, [router])
 
   // Load student surveys from localStorage on mount
   useEffect(() => {
@@ -186,6 +206,21 @@ export default function DashboardPage() {
 
   const activeTool = SAMPLE_EDTECH_TOOLS.find((t) => t.id === selectedToolId) || SAMPLE_EDTECH_TOOLS[0]
 
+  // Auth Gate: verifying staff session or redirecting to login
+  if (isCheckingAuth || !staffAuth) {
+    return (
+      <main style={{ maxWidth: '520px', margin: '0 auto', padding: '64px 20px', textAlign: 'center' }}>
+        <div className="card" style={{ padding: '32px' }}>
+          <ShieldAlert size={24} style={{ color: 'var(--primary)', margin: '0 auto 12px' }} aria-hidden="true" />
+          <h2 style={{ fontSize: '18px', marginBottom: '8px' }}>Checking your session…</h2>
+          <p className="meta-text">
+            Educator or administrator login is required to access this dashboard. Redirecting you to the login page.
+          </p>
+        </div>
+      </main>
+    )
+  }
+
   return (
     <div className="app-shell">
       {/* Sidebar Navigation — intelOS style (colorscheme.md §9) */}
@@ -248,10 +283,16 @@ export default function DashboardPage() {
           </Link>
         </nav>
 
-        <div style={{ padding: '16px', borderTop: '1px solid var(--border)' }}>
-          <div className="meta-text" style={{ fontSize: '12px' }}>Logged in as</div>
-          <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-primary)' }}>NGO Program Officer</div>
-          <div className="badge badge-info" style={{ marginTop: '6px', fontSize: '10px' }}>Municipal Network</div>
+        <div style={{ padding: '12px', borderTop: '1px solid var(--border)' }}>
+          <UserProfileCard
+            auth={staffAuth}
+            kind="staff"
+            displayName={getDisplayName(staffAuth.staffEmail, 'Teacher')}
+            stats={[
+              { label: 'Surveys collected', value: studentSurveys.length },
+              { label: 'Tools evaluated', value: SAMPLE_EDTECH_TOOLS.length },
+            ]}
+          />
         </div>
       </aside>
 

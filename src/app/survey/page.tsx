@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
-  BookOpen, ShieldCheck, CheckCircle2, Award,
+  BarChart2, ShieldCheck, CheckCircle2, Award,
   ExternalLink, Sparkles, Smartphone, Wifi, Clock, Lock,
   CalendarDays, MapPin
 } from 'lucide-react'
@@ -15,7 +16,8 @@ import type {
   LearningPreference
 } from '@/lib/types'
 import { getUpcomingEvents } from '@/lib/events'
-import TopNav from '@/components/TopNav'
+import { getDisplayName, getStudentAuth, type StudentAuth } from '@/lib/auth'
+import UserProfileCard from '@/components/UserProfileCard'
 
 const TYPE_LABELS: Record<string, string> = {
   competition: 'Competition',
@@ -31,14 +33,17 @@ const TYPE_LABELS: Record<string, string> = {
 }
 
 export default function StudentSurveyPage() {
-  // Auth state
-  const [authMethod, setAuthMethod] = useState<'school_email' | 'school_code'>('school_email')
-  const [studentEmail, setStudentEmail] = useState('')
-  const [schoolCode, setSchoolCode] = useState('SCH-KTM-2026')
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const router = useRouter()
+
+  // Auth state — session-gated via /survey/login
+  const [studentAuth, setStudentAuth] = useState<StudentAuth | null>(null)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
 
   // Upcoming events preview (Surfaced BEFORE survey as participation incentive)
   const [loadingEvents, setLoadingEvents] = useState(true)
+
+  // Profile activity summary (Personal.md §1)
+  const [surveysSubmitted, setSurveysSubmitted] = useState(0)
 
   // Survey Form state
   const [deviceOwnership, setDeviceOwnership] = useState<DeviceOwnership>('personal_smartphone')
@@ -56,27 +61,35 @@ export default function StudentSurveyPage() {
   const [submissionTime, setSubmissionTime] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  // Load upcoming events for incentive section (sorted by nearest deadline)
+  // Gate access: redirect to login if no student session exists
+  useEffect(() => {
+    const auth = getStudentAuth()
+    if (!auth) {
+      router.replace('/login')
+      return
+    }
+    setStudentAuth(auth)
+    setIsCheckingAuth(false)
+  }, [router])
+
+  // Load activity summary for the profile card once authenticated
+  useEffect(() => {
+    if (!studentAuth) return
+    try {
+      const stored = localStorage.getItem('edufit_student_surveys')
+      if (stored) setSurveysSubmitted(JSON.parse(stored).length)
+    } catch (e) {
+      console.error('Failed to load survey count:', e)
+    }
+  }, [studentAuth])
+
+  // Load upcoming events preview for incentive section
   const upcomingEvents = getUpcomingEvents(4)
 
   useEffect(() => {
     const timer = setTimeout(() => setLoadingEvents(false), 400)
     return () => clearTimeout(timer)
   }, [])
-
-  function handleLogin(e: React.FormEvent) {
-    e.preventDefault()
-    if (authMethod === 'school_email' && !studentEmail.trim()) {
-      setErrorMsg('Please enter your school-issued email address.')
-      return
-    }
-    if (authMethod === 'school_code' && !schoolCode.trim()) {
-      setErrorMsg('Please enter your school access code.')
-      return
-    }
-    setErrorMsg(null)
-    setIsAuthenticated(true)
-  }
 
   function toggleLimitation(item: string) {
     if (limitations.includes(item)) {
@@ -88,12 +101,13 @@ export default function StudentSurveyPage() {
 
   async function handleSubmitSurvey(e: React.FormEvent) {
     e.preventDefault()
+    if (!studentAuth) return
     setIsSubmitting(true)
     setErrorMsg(null)
 
     const payload: StudentSurvey = {
-      schoolId: schoolCode || 'SCH-KTM-DEFAULT',
-      authMethod,
+      schoolId: studentAuth.schoolCode || 'SCH-KTM-DEFAULT',
+      authMethod: studentAuth.authMethod,
       deviceOwnership,
       internetAccess,
       averageDailyScreenTimeMinutes: Number(screenTime),
@@ -123,6 +137,7 @@ export default function StudentSurveyPage() {
       // ONLY set confirmed success state AFTER write is completed
       setSubmissionTime(confirmedSurvey.confirmedAt!)
       setIsSubmittedConfirmed(true)
+      setSurveysSubmitted((count) => count + 1)
     } catch (err) {
       console.error('Survey submission error:', err)
       setErrorMsg('Failed to confirm your submission. Please check your internet connection and try again.')
@@ -132,10 +147,35 @@ export default function StudentSurveyPage() {
   }
 
   return (
-    <>
-      <TopNav />
+    <div className="app-shell">
+      {/* Left Rail: EduFit logo + logged-in student profile (Personal.md §1) */}
+      <aside className="sidebar">
+        <div className="sidebar-logo">
+          <Link href="/" className="nav-logo">
+            <BarChart2 size={20} style={{ color: 'var(--primary)' }} aria-hidden="true" />
+            <span>EduFit <span className="logo-accent">Nepal</span></span>
+          </Link>
+          <div className="meta-text" style={{ fontSize: '11px', marginTop: '4px' }}>
+            Student Portal
+          </div>
+        </div>
 
-      <main style={{ maxWidth: '840px', margin: '0 auto', padding: '40px 20px 80px' }}>
+        <div style={{ flex: 1 }} />
+
+        {studentAuth && (
+          <div style={{ padding: '12px', borderTop: '1px solid var(--border)' }}>
+            <UserProfileCard
+              auth={studentAuth}
+              kind="student"
+              displayName={getDisplayName(studentAuth.studentEmail, 'Student')}
+              stats={[{ label: 'Surveys submitted', value: surveysSubmitted }]}
+            />
+          </div>
+        )}
+      </aside>
+
+      <main className="main-content" style={{ padding: '40px 32px 80px' }}>
+        <div style={{ maxWidth: '840px', margin: '0 auto' }}>
         {/* Header Banner */}
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <div className="badge badge-primary" style={{ marginBottom: '12px', display: 'inline-flex' }}>
@@ -148,75 +188,19 @@ export default function StudentSurveyPage() {
           </p>
         </div>
 
-        {/* Step 1: Authentication */}
-        {!isAuthenticated && (
-          <div className="card" style={{ padding: '32px', maxWidth: '520px', margin: '0 auto' }}>
-            <h2 style={{ fontSize: '18px', marginBottom: '8px' }}>Log In to Begin</h2>
-            <p className="meta-text" style={{ marginBottom: '20px' }}>
-              Use your school-issued email address or your school access code.
+        {/* Auth Gate: verifying session or redirecting to login */}
+        {isCheckingAuth && (
+          <div className="card" style={{ padding: '32px', maxWidth: '520px', margin: '0 auto', textAlign: 'center' }}>
+            <Lock size={24} style={{ color: 'var(--primary)', margin: '0 auto 12px' }} aria-hidden="true" />
+            <h2 style={{ fontSize: '18px', marginBottom: '8px' }}>Checking your session…</h2>
+            <p className="meta-text">
+              Student login is required to access this portal. Redirecting you to the login page.
             </p>
-
-            {errorMsg && (
-              <div className="badge badge-danger" style={{ width: '100%', padding: '10px 14px', marginBottom: '16px', borderRadius: '8px' }}>
-                {errorMsg}
-              </div>
-            )}
-
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-              <button
-                type="button"
-                className={`btn-secondary ${authMethod === 'school_email' ? 'active' : ''}`}
-                style={{ flex: 1, justifyContent: 'center', background: authMethod === 'school_email' ? 'var(--primary-soft)' : undefined, color: authMethod === 'school_email' ? 'var(--primary)' : undefined, borderColor: authMethod === 'school_email' ? 'var(--primary)' : undefined }}
-                onClick={() => setAuthMethod('school_email')}
-              >
-                School Email
-              </button>
-              <button
-                type="button"
-                className={`btn-secondary ${authMethod === 'school_code' ? 'active' : ''}`}
-                style={{ flex: 1, justifyContent: 'center', background: authMethod === 'school_code' ? 'var(--primary-soft)' : undefined, color: authMethod === 'school_code' ? 'var(--primary)' : undefined, borderColor: authMethod === 'school_code' ? 'var(--primary)' : undefined }}
-                onClick={() => setAuthMethod('school_code')}
-              >
-                School Code
-              </button>
-            </div>
-
-            <form onSubmit={handleLogin}>
-              {authMethod === 'school_email' ? (
-                <div className="form-group">
-                  <label htmlFor="student-email">Student Email Address</label>
-                  <input
-                    id="student-email"
-                    type="email"
-                    placeholder="student.name@school.edu.np"
-                    value={studentEmail}
-                    onChange={(e) => setStudentEmail(e.target.value)}
-                    required
-                  />
-                </div>
-              ) : (
-                <div className="form-group">
-                  <label htmlFor="school-code">School Access Code</label>
-                  <input
-                    id="school-code"
-                    type="text"
-                    placeholder="e.g. SCH-KTM-2026"
-                    value={schoolCode}
-                    onChange={(e) => setSchoolCode(e.target.value)}
-                    required
-                  />
-                </div>
-              )}
-
-              <button type="submit" className="btn-primary w-full" style={{ justifyContent: 'center', marginTop: '12px' }}>
-                Continue to Portal
-              </button>
-            </form>
           </div>
         )}
 
         {/* Step 2: Authenticated Flow */}
-        {isAuthenticated && !isSubmittedConfirmed && (
+        {!isCheckingAuth && studentAuth && !isSubmittedConfirmed && (
           <div>
             {/* SECTION A: Upcoming Events (SURFACED BEFORE SURVEY QUESTIONS AS INCENTIVE) */}
             <div className="card" style={{ padding: '28px', marginBottom: '32px', borderLeft: '4px solid var(--primary)' }}>
@@ -509,7 +493,7 @@ export default function StudentSurveyPage() {
         )}
 
         {/* Step 3: Confirmed Completion View */}
-        {isSubmittedConfirmed && (
+        {!isCheckingAuth && studentAuth && isSubmittedConfirmed && (
           <div className="card" style={{ padding: '40px', textAlign: 'center', maxWidth: '560px', margin: '0 auto' }}>
             <div
               style={{
@@ -559,7 +543,8 @@ export default function StudentSurveyPage() {
             </div>
           </div>
         )}
+        </div>
       </main>
-    </>
+    </div>
   )
 }
