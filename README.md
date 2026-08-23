@@ -1,2 +1,2 @@
 # bnks-2
-EdVantage is our prject for the bnks hackathon
+EdVantage is our project for the bnks hackathon
