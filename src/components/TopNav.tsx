@@ -24,6 +24,7 @@ export default function TopNav() {
         <Link href="/#research"     className="nav-link">Research</Link>
         <Link href="/pricing"       className="nav-link">Pricing</Link>
         <Link href="/#faq"          className="nav-link">FAQ</Link>
+        <Link href="/events"        className="nav-link">Events</Link>
       </div>
 
       <div className="nav-actions">

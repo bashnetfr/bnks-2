@@ -4,17 +4,31 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   BookOpen, ShieldCheck, CheckCircle2, Award,
-  ExternalLink, Sparkles, Smartphone, Wifi, Clock, Lock
+  ExternalLink, Sparkles, Smartphone, Wifi, Clock, Lock,
+  CalendarDays, MapPin
 } from 'lucide-react'
 import type {
   StudentSurvey,
   DeviceOwnership,
   InternetAccess,
   DigitalConfidence,
-  LearningPreference,
-  Resource
+  LearningPreference
 } from '@/lib/types'
+import { getUpcomingEvents } from '@/lib/events'
 import TopNav from '@/components/TopNav'
+
+const TYPE_LABELS: Record<string, string> = {
+  competition: 'Competition',
+  hackathon: 'Hackathon',
+  workshop: 'Workshop',
+  bootcamp: 'Bootcamp',
+  seminar: 'Seminar',
+  conference: 'Conference',
+  career_event: 'Career event',
+  volunteering: 'Volunteering',
+  networking: 'Networking',
+  other: 'Event',
+}
 
 export default function StudentSurveyPage() {
   // Auth state
@@ -23,9 +37,8 @@ export default function StudentSurveyPage() {
   const [schoolCode, setSchoolCode] = useState('SCH-KTM-2026')
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-  // Resource Hub state (Surfaced BEFORE survey as participation incentive)
-  const [resources, setResources] = useState<Resource[]>([])
-  const [loadingResources, setLoadingResources] = useState(true)
+  // Upcoming events preview (Surfaced BEFORE survey as participation incentive)
+  const [loadingEvents, setLoadingEvents] = useState(true)
 
   // Survey Form state
   const [deviceOwnership, setDeviceOwnership] = useState<DeviceOwnership>('personal_smartphone')
@@ -43,22 +56,12 @@ export default function StudentSurveyPage() {
   const [submissionTime, setSubmissionTime] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  // Fetch Resources for Incentive Section
+  // Load upcoming events for incentive section (sorted by nearest deadline)
+  const upcomingEvents = getUpcomingEvents(4)
+
   useEffect(() => {
-    async function fetchIncentiveResources() {
-      try {
-        const res = await fetch('/api/resources')
-        const data = await res.json()
-        if (data.success) {
-          setResources(data.data.slice(0, 4))
-        }
-      } catch (err) {
-        console.error('Failed to fetch resources:', err)
-      } finally {
-        setLoadingResources(false)
-      }
-    }
-    fetchIncentiveResources()
+    const timer = setTimeout(() => setLoadingEvents(false), 400)
+    return () => clearTimeout(timer)
   }, [])
 
   function handleLogin(e: React.FormEvent) {
@@ -141,7 +144,7 @@ export default function StudentSurveyPage() {
           </div>
           <h1>Student Access & Opportunity Portal</h1>
           <p className="body-text" style={{ marginTop: '8px', maxWidth: '600px', margin: '8px auto 0' }}>
-            Discover scholarships and learning opportunities while helping your school understand real digital access at home.
+            Discover upcoming competitions, hackathons and events while helping your school understand real digital access at home.
           </p>
         </div>
 
@@ -215,49 +218,53 @@ export default function StudentSurveyPage() {
         {/* Step 2: Authenticated Flow */}
         {isAuthenticated && !isSubmittedConfirmed && (
           <div>
-            {/* SECTION A: Resource Hub (SURFACED BEFORE SURVEY QUESTIONS AS INCENTIVE) */}
+            {/* SECTION A: Upcoming Events (SURFACED BEFORE SURVEY QUESTIONS AS INCENTIVE) */}
             <div className="card" style={{ padding: '28px', marginBottom: '32px', borderLeft: '4px solid var(--primary)' }}>
               <div className="flex items-center justify-between" style={{ marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
                 <div>
                   <div className="badge badge-success" style={{ marginBottom: '6px' }}>
                     <Award size={12} aria-hidden="true" /> Participation Incentive
                   </div>
-                  <h2 style={{ fontSize: '18px' }}>Student Resource Hub & Opportunities</h2>
+                  <h2 style={{ fontSize: '18px' }}>Upcoming Events &amp; Competitions</h2>
                 </div>
-                <Link href="/api/resources" target="_blank" className="meta-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
-                  View Full API <ExternalLink size={12} />
+                <Link href="/events" target="_blank" className="meta-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
+                  Open Event Finder <ExternalLink size={12} />
                 </Link>
               </div>
 
               <p className="body-text" style={{ marginBottom: '20px' }}>
-                Here are free curated opportunities, scholarships, and learning platforms available to students in Nepal right now:
+                Here are upcoming student events across Nepal closing soon — hackathons, competitions, workshops and more:
               </p>
 
-              {loadingResources ? (
+              {loadingEvents ? (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
                   <div className="skeleton" style={{ height: '100px' }} />
                   <div className="skeleton" style={{ height: '100px' }} />
                 </div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-                  {resources.map((item) => (
-                    <div key={item.id} style={{ padding: '14px', background: 'var(--surface-muted)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
+                  {upcomingEvents.map((event) => (
+                    <Link
+                      key={event.id}
+                      href={`/events/${event.id}`}
+                      style={{ padding: '14px', background: 'var(--surface-muted)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', textDecoration: 'none' }}
+                    >
                       <div className="badge badge-info" style={{ marginBottom: '6px', fontSize: '11px' }}>
-                        {item.type.replace('_', ' ').toUpperCase()}
+                        {TYPE_LABELS[event.eventType]}
                       </div>
-                      <h3 style={{ fontSize: '14px', marginBottom: '4px' }}>{item.title}</h3>
-                      <p className="meta-text" style={{ fontSize: '12px', lineHeight: 1.4, marginBottom: '8px' }}>
-                        {item.description}
+                      <h3 style={{ fontSize: '14px', marginBottom: '4px', color: 'var(--text-primary)' }}>{event.title}</h3>
+                      <p className="meta-text" style={{ fontSize: '12px', lineHeight: 1.4, marginBottom: '8px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <span className="flex items-center gap-1">
+                          <MapPin size={11} aria-hidden="true" /> {event.location} · {event.registrationFee === 0 ? 'Free' : event.registrationFee ? `NPR ${event.registrationFee.toLocaleString('en-US')}` : 'Fee unclear'}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <CalendarDays size={11} aria-hidden="true" /> Closes {new Date(event.registrationDeadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
                       </p>
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{ fontSize: '12px', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                      >
-                        Access Resource <ExternalLink size={12} />
-                      </a>
-                    </div>
+                      <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--primary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        View Event <ExternalLink size={12} />
+                      </span>
+                    </Link>
                   ))}
                 </div>
               )}

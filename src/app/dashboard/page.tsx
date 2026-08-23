@@ -242,9 +242,9 @@ export default function DashboardPage() {
             <Award size={18} />
             Student Survey Form ↗
           </Link>
-          <Link href="/api/resources" target="_blank" className="nav-item">
+          <Link href="/api/events" target="_blank" className="nav-item">
             <Layers size={18} />
-            Resource Hub API ↗
+            Events API ↗
           </Link>
         </nav>
 
