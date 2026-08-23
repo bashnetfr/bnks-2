@@ -9,7 +9,6 @@ import {
   CalendarDays, MapPin
 } from 'lucide-react'
 import type {
-  StudentSurvey,
   DeviceOwnership,
   InternetAccess,
   DigitalConfidence,
@@ -120,22 +119,36 @@ export default function StudentSurveyPage() {
     }
 
     try {
-      // Simulate confirmed API/DB write
-      await new Promise((resolve) => setTimeout(resolve, 800))
-      
-      // Store in localStorage for persistence demo
-      const existingStr = localStorage.getItem('edufit_student_surveys')
-      const existing: StudentSurvey[] = existingStr ? JSON.parse(existingStr) : []
-      const confirmedSurvey: StudentSurvey = {
-        ...payload,
-        id: `surv-${Date.now()}`,
-        confirmedAt: new Date().toISOString(),
+      const supabase = createBrowserSupabaseClient()
+      const { data: sessionData } = await supabase.auth.getSession()
+      const uid = sessionData.session?.user.id
+
+      if (!uid || !memberInfo) {
+        setErrorMsg('Your session has expired. Please sign in again.')
+        return
       }
-      existing.push(confirmedSurvey)
-      localStorage.setItem('edufit_student_surveys', JSON.stringify(existing))
+
+      const nowIso = new Date().toISOString()
+      const { error: insertError } = await supabase.from('student_surveys').insert({
+        school_id: memberInfo.schoolId,
+        auth_method: 'school_email',
+        device_ownership: deviceOwnership,
+        internet_access: internetAccess,
+        average_daily_screen_time_minutes: Number(screenTime),
+        learning_preference: learningPref,
+        digital_confidence: digitalConfidence,
+        has_quiet_study_space: quietSpace,
+        access_limitations: limitations,
+        completed_on_shared_device: completedOnSharedDevice,
+        submitted_by: uid,
+        submitted_at: nowIso,
+        confirmed_at: nowIso,
+      })
+
+      if (insertError) throw new Error(insertError.message)
 
       // ONLY set confirmed success state AFTER write is completed
-      setSubmissionTime(confirmedSurvey.confirmedAt!)
+      setSubmissionTime(nowIso)
       setIsSubmittedConfirmed(true)
       setSurveysSubmitted((count) => count + 1)
     } catch (err) {
@@ -528,17 +541,8 @@ export default function StudentSurveyPage() {
             </div>
 
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => {
-                  setIsSubmittedConfirmed(false)
-                }}
-              >
-                Submit Another Response
-              </button>
-              <Link href="/dashboard" className="btn-primary">
-                Go to School Dashboard
+              <Link href="/student" className="btn-primary">
+                Go to My Dashboard
               </Link>
             </div>
           </div>

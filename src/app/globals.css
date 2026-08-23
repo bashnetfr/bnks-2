@@ -549,3 +549,11 @@ label {
     display: none;
   }
 }
+
+/* Student/teacher dashboard two-column grids collapse on small screens */
+@media (max-width: 768px) {
+  .student-two-col {
+    grid-template-columns: 1fr !important;
+  }
+}
+
