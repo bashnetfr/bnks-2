@@ -7,10 +7,13 @@ import { BarChart2, BookOpen, ChevronRight } from 'lucide-react'
 export default function TopNav() {
   const pathname = usePathname()
 
-  // Don't show marketing nav inside dashboard or survey
+  // Don't show marketing nav inside dashboard, survey, or login
   const isDashboard = pathname.startsWith('/dashboard')
   const isSurvey = pathname.startsWith('/survey')
-  if (isDashboard || isSurvey) return null
+  const isLogin = pathname.startsWith('/login')
+  const isStudentDash = pathname.startsWith('/student')
+  const isTeacherDash = pathname.startsWith('/teacher')
+  if (isDashboard || isSurvey || isLogin || isStudentDash || isTeacherDash) return null
 
   return (
     <nav className="top-nav" role="navigation" aria-label="Main navigation">

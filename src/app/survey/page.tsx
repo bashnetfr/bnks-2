@@ -7,21 +7,19 @@ import {
   ExternalLink, Sparkles, Smartphone, Wifi, Clock, Lock
 } from 'lucide-react'
 import type {
-  StudentSurvey,
   DeviceOwnership,
   InternetAccess,
   DigitalConfidence,
   LearningPreference,
   Resource
 } from '@/lib/types'
+import { createBrowserSupabaseClient } from '@/lib/supabase'
+import UserBadge from '@/components/UserBadge'
 import TopNav from '@/components/TopNav'
 
 export default function StudentSurveyPage() {
-  // Auth state
-  const [authMethod, setAuthMethod] = useState<'school_email' | 'school_code'>('school_email')
-  const [studentEmail, setStudentEmail] = useState('')
-  const [schoolCode, setSchoolCode] = useState('SCH-KTM-2026')
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  // Auth state — page renders behind AuthGuard (student session required)
+  const [memberInfo, setMemberInfo] = useState<{ schoolId: string; fullName: string } | null>(null)
 
   // Resource Hub state (Surfaced BEFORE survey as participation incentive)
   const [resources, setResources] = useState<Resource[]>([])
@@ -61,19 +59,29 @@ export default function StudentSurveyPage() {
     fetchIncentiveResources()
   }, [])
 
-  function handleLogin(e: React.FormEvent) {
-    e.preventDefault()
-    if (authMethod === 'school_email' && !studentEmail.trim()) {
-      setErrorMsg('Please enter your school-issued email address.')
-      return
+  // Load the signed-in student's membership (RLS: only own row is visible)
+  useEffect(() => {
+    async function loadMembership() {
+      try {
+        const supabase = createBrowserSupabaseClient()
+        const { data: sessionData } = await supabase.auth.getSession()
+        if (!sessionData.session) return
+
+        const { data, error } = await supabase
+          .from('school_members')
+          .select('id, full_name, school_id')
+          .eq('user_id', sessionData.session.user.id)
+          .maybeSingle()
+
+        if (!error && data) {
+          setMemberInfo({ schoolId: data.school_id, fullName: data.full_name })
+        }
+      } catch (err) {
+        console.error('Failed to load membership:', err)
+      }
     }
-    if (authMethod === 'school_code' && !schoolCode.trim()) {
-      setErrorMsg('Please enter your school access code.')
-      return
-    }
-    setErrorMsg(null)
-    setIsAuthenticated(true)
-  }
+    loadMembership()
+  }, [])
 
   function toggleLimitation(item: string) {
     if (limitations.includes(item)) {
@@ -88,37 +96,37 @@ export default function StudentSurveyPage() {
     setIsSubmitting(true)
     setErrorMsg(null)
 
-    const payload: StudentSurvey = {
-      schoolId: schoolCode || 'SCH-KTM-DEFAULT',
-      authMethod,
-      deviceOwnership,
-      internetAccess,
-      averageDailyScreenTimeMinutes: Number(screenTime),
-      learningPreference: learningPref,
-      digitalConfidence,
-      hasQuietStudySpace: quietSpace,
-      accessLimitations: limitations,
-      completedOnSharedDevice,
-      submittedAt: new Date().toISOString(),
-    }
-
     try {
-      // Simulate confirmed API/DB write
-      await new Promise((resolve) => setTimeout(resolve, 800))
-      
-      // Store in localStorage for persistence demo
-      const existingStr = localStorage.getItem('edufit_student_surveys')
-      const existing: StudentSurvey[] = existingStr ? JSON.parse(existingStr) : []
-      const confirmedSurvey: StudentSurvey = {
-        ...payload,
-        id: `surv-${Date.now()}`,
-        confirmedAt: new Date().toISOString(),
+      const supabase = createBrowserSupabaseClient()
+      const { data: sessionData } = await supabase.auth.getSession()
+      const uid = sessionData.session?.user.id
+
+      if (!uid || !memberInfo) {
+        setErrorMsg('Your session has expired. Please sign in again.')
+        return
       }
-      existing.push(confirmedSurvey)
-      localStorage.setItem('edufit_student_surveys', JSON.stringify(existing))
+
+      const nowIso = new Date().toISOString()
+      const { error: insertError } = await supabase.from('student_surveys').insert({
+        school_id: memberInfo.schoolId,
+        auth_method: 'school_email',
+        device_ownership: deviceOwnership,
+        internet_access: internetAccess,
+        average_daily_screen_time_minutes: Number(screenTime),
+        learning_preference: learningPref,
+        digital_confidence: digitalConfidence,
+        has_quiet_study_space: quietSpace,
+        access_limitations: limitations,
+        completed_on_shared_device: completedOnSharedDevice,
+        submitted_by: uid,
+        submitted_at: nowIso,
+        confirmed_at: nowIso,
+      })
+
+      if (insertError) throw new Error(insertError.message)
 
       // ONLY set confirmed success state AFTER write is completed
-      setSubmissionTime(confirmedSurvey.confirmedAt!)
+      setSubmissionTime(nowIso)
       setIsSubmittedConfirmed(true)
     } catch (err) {
       console.error('Survey submission error:', err)
@@ -145,75 +153,13 @@ export default function StudentSurveyPage() {
           </p>
         </div>
 
-        {/* Step 1: Authentication */}
-        {!isAuthenticated && (
-          <div className="card" style={{ padding: '32px', maxWidth: '520px', margin: '0 auto' }}>
-            <h2 style={{ fontSize: '18px', marginBottom: '8px' }}>Log In to Begin</h2>
-            <p className="meta-text" style={{ marginBottom: '20px' }}>
-              Use your school-issued email address or your school access code.
-            </p>
+        {/* Signed-in member strip */}
+        <div className="card" style={{ padding: '12px 20px', marginBottom: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+          <UserBadge compact />
+        </div>
 
-            {errorMsg && (
-              <div className="badge badge-danger" style={{ width: '100%', padding: '10px 14px', marginBottom: '16px', borderRadius: '8px' }}>
-                {errorMsg}
-              </div>
-            )}
-
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-              <button
-                type="button"
-                className={`btn-secondary ${authMethod === 'school_email' ? 'active' : ''}`}
-                style={{ flex: 1, justifyContent: 'center', background: authMethod === 'school_email' ? 'var(--primary-soft)' : undefined, color: authMethod === 'school_email' ? 'var(--primary)' : undefined, borderColor: authMethod === 'school_email' ? 'var(--primary)' : undefined }}
-                onClick={() => setAuthMethod('school_email')}
-              >
-                School Email
-              </button>
-              <button
-                type="button"
-                className={`btn-secondary ${authMethod === 'school_code' ? 'active' : ''}`}
-                style={{ flex: 1, justifyContent: 'center', background: authMethod === 'school_code' ? 'var(--primary-soft)' : undefined, color: authMethod === 'school_code' ? 'var(--primary)' : undefined, borderColor: authMethod === 'school_code' ? 'var(--primary)' : undefined }}
-                onClick={() => setAuthMethod('school_code')}
-              >
-                School Code
-              </button>
-            </div>
-
-            <form onSubmit={handleLogin}>
-              {authMethod === 'school_email' ? (
-                <div className="form-group">
-                  <label htmlFor="student-email">Student Email Address</label>
-                  <input
-                    id="student-email"
-                    type="email"
-                    placeholder="student.name@school.edu.np"
-                    value={studentEmail}
-                    onChange={(e) => setStudentEmail(e.target.value)}
-                    required
-                  />
-                </div>
-              ) : (
-                <div className="form-group">
-                  <label htmlFor="school-code">School Access Code</label>
-                  <input
-                    id="school-code"
-                    type="text"
-                    placeholder="e.g. SCH-KTM-2026"
-                    value={schoolCode}
-                    onChange={(e) => setSchoolCode(e.target.value)}
-                    required
-                  />
-                </div>
-              )}
-
-              <button type="submit" className="btn-primary w-full" style={{ justifyContent: 'center', marginTop: '12px' }}>
-                Continue to Portal
-              </button>
-            </form>
-          </div>
-        )}
-
-        {/* Step 2: Authenticated Flow */}
-        {isAuthenticated && !isSubmittedConfirmed && (
+        {/* Authenticated Flow */}
+        {!isSubmittedConfirmed && (
           <div>
             {/* SECTION A: Resource Hub (SURFACED BEFORE SURVEY QUESTIONS AS INCENTIVE) */}
             <div className="card" style={{ padding: '28px', marginBottom: '32px', borderLeft: '4px solid var(--primary)' }}>
@@ -537,17 +483,8 @@ export default function StudentSurveyPage() {
             </div>
 
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => {
-                  setIsSubmittedConfirmed(false)
-                }}
-              >
-                Submit Another Response
-              </button>
-              <Link href="/dashboard" className="btn-primary">
-                Go to School Dashboard
+              <Link href="/student" className="btn-primary">
+                Go to My Dashboard
               </Link>
             </div>
           </div>

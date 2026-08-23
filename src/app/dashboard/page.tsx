@@ -25,6 +25,7 @@ import type {
 } from '@/lib/types'
 import { computeCompatibility } from '@/lib/scoring'
 import { SAMPLE_EDTECH_TOOLS } from '@/lib/tools'
+import UserBadge from '@/components/UserBadge'
 
 export default function DashboardPage() {
   // Navigation / Tab state
@@ -249,9 +250,7 @@ export default function DashboardPage() {
         </nav>
 
         <div style={{ padding: '16px', borderTop: '1px solid var(--border)' }}>
-          <div className="meta-text" style={{ fontSize: '12px' }}>Logged in as</div>
-          <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-primary)' }}>NGO Program Officer</div>
-          <div className="badge badge-info" style={{ marginTop: '6px', fontSize: '10px' }}>Municipal Network</div>
+          <UserBadge />
         </div>
       </aside>
 
