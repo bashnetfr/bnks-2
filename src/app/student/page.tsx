@@ -148,7 +148,7 @@ export default function StudentDashboardPage() {
       <aside className="sidebar">
         <div className="sidebar-logo">
           <BarChart2 size={20} style={{ color: 'var(--primary)' }} aria-hidden="true" />
-          <span>EduFit Nepal</span>
+          <span>Ed-<span className="logo-accent">Vantage</span></span>
         </div>
         <nav className="sidebar-nav" aria-label="Student dashboard navigation">
           <a href="#" className="nav-item active"><GraduationCap size={16} aria-hidden="true" /> My Dashboard</a>
