@@ -29,6 +29,37 @@ import { SAMPLE_EDTECH_TOOLS } from '@/lib/tools'
 import { getDisplayName, getStaffAuth, type StaffAuth } from '@/lib/auth'
 import UserProfileCard from '@/components/UserProfileCard'
 
+// Demo fallback used ONLY when the survey API is unreachable — shows limited
+// home access so reality-gap blending can still be demonstrated offline.
+const MOCK_SURVEYS: StudentSurvey[] = [
+  {
+    id: 'surv-m1',
+    schoolId: 'sch-ktm-001',
+    authMethod: 'school_email',
+    deviceOwnership: 'shared_family',
+    internetAccess: 'mobile_data_limited',
+    averageDailyScreenTimeMinutes: 30,
+    learningPreference: 'interactive',
+    digitalConfidence: 2,
+    hasQuietStudySpace: false,
+    accessLimitations: ['cost', 'no_device'],
+    completedOnSharedDevice: false,
+  },
+  {
+    id: 'surv-m2',
+    schoolId: 'sch-ktm-001',
+    authMethod: 'school_code',
+    deviceOwnership: 'none',
+    internetAccess: 'school_only',
+    averageDailyScreenTimeMinutes: 0,
+    learningPreference: 'video',
+    digitalConfidence: 2,
+    hasQuietStudySpace: false,
+    accessLimitations: ['no_device', 'power'],
+    completedOnSharedDevice: true,
+  },
+]
+
 export default function DashboardPage() {
   const router = useRouter()
 
@@ -112,47 +143,23 @@ export default function DashboardPage() {
     setIsCheckingAuth(false)
   }, [router])
 
-  // Load student surveys from localStorage on mount
+  // Load student surveys from Supabase (via /api/surveys) on mount
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('edufit_student_surveys')
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        setStudentSurveys(parsed)
-      } else {
-        // Mock 4 student surveys showing limited home access to demonstrate reality gap blending
-        const mockSurveys: StudentSurvey[] = [
-          {
-            id: 'surv-m1',
-            schoolId: 'sch-ktm-001',
-            authMethod: 'school_email',
-            deviceOwnership: 'shared_family',
-            internetAccess: 'mobile_data_limited',
-            averageDailyScreenTimeMinutes: 30,
-            learningPreference: 'interactive',
-            digitalConfidence: 2,
-            hasQuietStudySpace: false,
-            accessLimitations: ['cost', 'no_device'],
-            completedOnSharedDevice: false,
-          },
-          {
-            id: 'surv-m2',
-            schoolId: 'sch-ktm-001',
-            authMethod: 'school_code',
-            deviceOwnership: 'none',
-            internetAccess: 'school_only',
-            averageDailyScreenTimeMinutes: 0,
-            learningPreference: 'video',
-            digitalConfidence: 2,
-            hasQuietStudySpace: false,
-            accessLimitations: ['no_device', 'power'],
-            completedOnSharedDevice: true,
-          },
-        ]
-        setStudentSurveys(mockSurveys)
+    let cancelled = false
+    async function loadSurveys() {
+      try {
+        const res = await fetch('/api/surveys')
+        const json = await res.json()
+        if (!res.ok || !json.success) throw new Error(json.error ?? 'Survey API failed')
+        if (!cancelled) setStudentSurveys(json.data)
+      } catch (e) {
+        console.warn('[dashboard] Survey API unavailable — falling back to demo mock data:', e)
+        if (!cancelled) setStudentSurveys(MOCK_SURVEYS)
       }
-    } catch (e) {
-      console.error('Failed to load surveys:', e)
+    }
+    loadSurveys()
+    return () => {
+      cancelled = true
     }
   }, [])
 

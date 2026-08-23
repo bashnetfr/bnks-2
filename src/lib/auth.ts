@@ -64,3 +64,13 @@ export function getDisplayName(email: string | undefined, fallback: string): str
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ') || fallback
 }
+
+// Stable identity key for per-user data (saved events, matching profile).
+// Email when available; otherwise namespaced by school code for code-only logins.
+export function getEventsOwnerKey(): string | null {
+  const student = getStudentAuth()
+  if (student) return student.studentEmail ?? `code:${student.schoolCode}`
+  const staff = getStaffAuth()
+  if (staff) return staff.staffEmail ?? `code:${staff.schoolCode}`
+  return null
+}

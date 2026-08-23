@@ -9,6 +9,7 @@ import {
   Lock, LogIn, X
 } from 'lucide-react'
 import type { EducationLevel, Event, StudentEventProfile } from '@/lib/types'
+import { getEventsOwnerKey } from '@/lib/auth'
 import {
   EVENTS, computeMatch, getEffectiveStatus, isActiveForDiscovery,
   isRegistrationOpen, getOrganizationById
@@ -126,14 +127,34 @@ export default function EventsPage() {
   const [showProfilePanel, setShowProfilePanel] = useState(false)
 
   useEffect(() => {
-    try {
-      const savedStr = localStorage.getItem('edufit_saved_events')
-      if (savedStr) setSavedIds(JSON.parse(savedStr))
-      const profileStr = localStorage.getItem('edufit_event_profile')
-      if (profileStr) setProfile({ ...DEFAULT_PROFILE, ...JSON.parse(profileStr) })
-      setIsLoggedIn(localStorage.getItem('edufit_logged_in') === 'true')
-    } catch (e) {
-      console.error('Failed to load local state:', e)
+    // Identity comes from the platform session (student or staff login)
+    const ownerKey = getEventsOwnerKey()
+    setIsLoggedIn(ownerKey !== null)
+    if (!ownerKey) return
+
+    let cancelled = false
+    async function loadSavedState() {
+      try {
+        const params = `owner=${encodeURIComponent(ownerKey!)}`
+        const [savedRes, profileRes] = await Promise.all([
+          fetch(`/api/events/saved?${params}`),
+          fetch(`/api/events/profile?${params}`),
+        ])
+        const savedJson = await savedRes.json()
+        if (savedRes.ok && savedJson.success && !cancelled) {
+          setSavedIds(savedJson.data)
+        }
+        const profileJson = await profileRes.json()
+        if (profileRes.ok && profileJson.success && profileJson.data && !cancelled) {
+          setProfile({ ...DEFAULT_PROFILE, ...profileJson.data })
+        }
+      } catch (e) {
+        console.warn('[events] Failed to load saved state — using defaults:', e)
+      }
+    }
+    loadSavedState()
+    return () => {
+      cancelled = true
     }
   }, [])
 
@@ -145,11 +166,28 @@ export default function EventsPage() {
 
   function toggleSaved(id: string) {
     if (!requireLogin()) return
-    setSavedIds((prev) => {
-      const next = prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
-      localStorage.setItem('edufit_saved_events', JSON.stringify(next))
-      return next
-    })
+    const ownerKey = getEventsOwnerKey()
+    if (!ownerKey) {
+      setShowLoginModal(true)
+      return
+    }
+
+    const removing = savedIds.includes(id)
+    setSavedIds((prev) => (removing ? prev.filter((s) => s !== id) : [...prev, id]))
+
+    // Persist to Supabase via server route (UI updates immediately)
+    const request = removing
+      ? fetch(`/api/events/saved?owner=${encodeURIComponent(ownerKey)}&eventId=${encodeURIComponent(id)}`, { method: 'DELETE' })
+      : fetch('/api/events/saved', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ownerKey, eventId: id }),
+        })
+    request
+      .then(async (res) => {
+        if (!res.ok) console.error('[events] Save sync failed:', await res.text())
+      })
+      .catch((e) => console.error('[events] Save sync failed:', e))
   }
 
   function handleSavedChipClick() {
@@ -160,7 +198,19 @@ export default function EventsPage() {
   function updateProfile(patch: Partial<StudentEventProfile>) {
     setProfile((prev) => {
       const next = { ...prev, ...patch }
-      localStorage.setItem('edufit_event_profile', JSON.stringify(next))
+      const ownerKey = getEventsOwnerKey()
+      if (ownerKey) {
+        // Persist to Supabase via server route (UI updates immediately)
+        fetch('/api/events/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ownerKey, profile: next }),
+        })
+          .then(async (res) => {
+            if (!res.ok) console.error('[events] Profile sync failed:', await res.text())
+          })
+          .catch((e) => console.error('[events] Profile sync failed:', e))
+      }
       return next
     })
   }

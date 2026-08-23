@@ -10,8 +10,9 @@ import {
 } from 'lucide-react'
 import { createBrowserSupabaseClient } from '@/lib/supabase'
 import UserBadge from '@/components/UserBadge'
+import { getUpcomingEvents } from '@/lib/events'
 import type {
-  StudentSurvey, DeviceOwnership, InternetAccess, LearningPreference, Resource
+  StudentSurvey, DeviceOwnership, InternetAccess, LearningPreference
 } from '@/lib/types'
 
 const DEVICE_LABELS: Record<DeviceOwnership, string> = {
@@ -56,8 +57,7 @@ export default function StudentDashboardPage() {
   const [phase, setPhase] = useState<Phase>('loading')
   const [memberName, setMemberName] = useState('')
   const [latestSurvey, setLatestSurvey] = useState<StudentSurvey | null>(null)
-  const [resources, setResources] = useState<Resource[]>([])
-  const [loadingResources, setLoadingResources] = useState(true)
+  const upcomingEvents = getUpcomingEvents(3)
 
   useEffect(() => {
     let cancelled = false
@@ -121,23 +121,6 @@ export default function StudentDashboardPage() {
     return () => { cancelled = true }
   }, [router])
 
-  useEffect(() => {
-    let cancelled = false
-    async function fetchResources() {
-      try {
-        const res = await fetch('/api/resources')
-        const data = await res.json()
-        if (!cancelled && data.success) setResources(data.data.slice(0, 4))
-      } catch (err) {
-        console.error('Failed to fetch resources:', err)
-      } finally {
-        if (!cancelled) setLoadingResources(false)
-      }
-    }
-    fetchResources()
-    return () => { cancelled = true }
-  }, [])
-
   if (phase !== 'ready') {
     return (
       <main style={{ maxWidth: '520px', margin: '0 auto', padding: '80px 20px', textAlign: 'center' }}>
@@ -170,7 +153,7 @@ export default function StudentDashboardPage() {
         <nav className="sidebar-nav" aria-label="Student dashboard navigation">
           <a href="#" className="nav-item active"><GraduationCap size={16} aria-hidden="true" /> My Dashboard</a>
           <Link href="/survey" className="nav-item"><BookOpen size={16} aria-hidden="true" /> Monthly Survey</Link>
-          <a href="#resources" className="nav-item"><Award size={16} aria-hidden="true" /> Resource Hub</a>
+          <a href="#resources" className="nav-item"><Award size={16} aria-hidden="true" /> Events & Opportunities</a>
         </nav>
         <div style={{ marginTop: 'auto', padding: '16px', borderTop: '1px solid var(--border)' }}>
           <UserBadge compact />
@@ -279,35 +262,35 @@ export default function StudentDashboardPage() {
         </div>
 
         <section id="resources">
-          <h2 style={{ fontSize: '18px', marginBottom: '4px' }}>Resource Hub & Opportunities</h2>
-          <p className="meta-text" style={{ marginBottom: '16px' }}>Free scholarships, competitions and learning platforms for students in Nepal.</p>
+          <div className="flex items-center justify-between" style={{ marginBottom: '4px', flexWrap: 'wrap', gap: '8px' }}>
+            <h2 style={{ fontSize: '18px' }}>Upcoming Events &amp; Opportunities</h2>
+            <Link href="/events" className="meta-text" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              Open Event Finder <ExternalLink size={12} />
+            </Link>
+          </div>
+          <p className="meta-text" style={{ marginBottom: '16px' }}>Competitions, hackathons and workshops for students across Nepal — registration closing soon.</p>
 
-          {loadingResources ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-              <div className="skeleton" style={{ height: '100px' }} />
-              <div className="skeleton" style={{ height: '100px' }} />
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-              {resources.map((item) => (
-                <div key={item.id} className="card" style={{ padding: '16px' }}>
-                  <div className="badge badge-info" style={{ marginBottom: '6px', fontSize: '10px' }}>
-                    {item.type.replace('_', ' ').toUpperCase()}
-                  </div>
-                  <h3 style={{ fontSize: '14px', marginBottom: '4px' }}>{item.title}</h3>
-                  <p className="meta-text" style={{ fontSize: '12px', lineHeight: 1.45, marginBottom: '10px' }}>{item.description}</p>
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ fontSize: '12px', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                  >
-                    Access Resource <ExternalLink size={12} />
-                  </a>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+            {upcomingEvents.map((event) => (
+              <Link
+                key={event.id}
+                href={`/events/${event.id}`}
+                className="card"
+                style={{ padding: '16px', textDecoration: 'none' }}
+              >
+                <div className="badge badge-info" style={{ marginBottom: '6px', fontSize: '10px' }}>
+                  {event.eventType.replace('_', ' ').toUpperCase()}
                 </div>
-              ))}
-            </div>
-          )}
+                <h3 style={{ fontSize: '14px', marginBottom: '4px', color: 'var(--text-primary)' }}>{event.title}</h3>
+                <p className="meta-text" style={{ fontSize: '12px', lineHeight: 1.45, marginBottom: '10px' }}>
+                  {event.location} · Closes {new Date(event.registrationDeadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </p>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--primary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  View Event <ExternalLink size={12} />
+                </span>
+              </Link>
+            ))}
+          </div>
         </section>
       </main>
     </div>

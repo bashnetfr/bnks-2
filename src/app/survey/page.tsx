@@ -9,6 +9,7 @@ import {
   CalendarDays, MapPin
 } from 'lucide-react'
 import type {
+  StudentSurvey,
   DeviceOwnership,
   InternetAccess,
   DigitalConfidence,
@@ -71,17 +72,6 @@ export default function StudentSurveyPage() {
     setIsCheckingAuth(false)
   }, [router])
 
-  // Load activity summary for the profile card once authenticated
-  useEffect(() => {
-    if (!studentAuth) return
-    try {
-      const stored = localStorage.getItem('edufit_student_surveys')
-      if (stored) setSurveysSubmitted(JSON.parse(stored).length)
-    } catch (e) {
-      console.error('Failed to load survey count:', e)
-    }
-  }, [studentAuth])
-
   // Load upcoming events preview for incentive section
   const upcomingEvents = getUpcomingEvents(4)
 
@@ -119,36 +109,19 @@ export default function StudentSurveyPage() {
     }
 
     try {
-      const supabase = createBrowserSupabaseClient()
-      const { data: sessionData } = await supabase.auth.getSession()
-      const uid = sessionData.session?.user.id
-
-      if (!uid || !memberInfo) {
-        setErrorMsg('Your session has expired. Please sign in again.')
-        return
+      // Confirmed write via server route → Supabase (no optimistic success)
+      const res = await fetch('/api/surveys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const result = await res.json()
+      if (!res.ok || !result.success) {
+        throw new Error(result.error ?? 'Survey write failed')
       }
 
-      const nowIso = new Date().toISOString()
-      const { error: insertError } = await supabase.from('student_surveys').insert({
-        school_id: memberInfo.schoolId,
-        auth_method: 'school_email',
-        device_ownership: deviceOwnership,
-        internet_access: internetAccess,
-        average_daily_screen_time_minutes: Number(screenTime),
-        learning_preference: learningPref,
-        digital_confidence: digitalConfidence,
-        has_quiet_study_space: quietSpace,
-        access_limitations: limitations,
-        completed_on_shared_device: completedOnSharedDevice,
-        submitted_by: uid,
-        submitted_at: nowIso,
-        confirmed_at: nowIso,
-      })
-
-      if (insertError) throw new Error(insertError.message)
-
-      // ONLY set confirmed success state AFTER write is completed
-      setSubmissionTime(nowIso)
+      // ONLY set confirmed success state AFTER the DB write is completed
+      setSubmissionTime(result.data.confirmedAt ?? new Date().toISOString())
       setIsSubmittedConfirmed(true)
       setSurveysSubmitted((count) => count + 1)
     } catch (err) {
@@ -181,7 +154,7 @@ export default function StudentSurveyPage() {
               auth={studentAuth}
               kind="student"
               displayName={getDisplayName(studentAuth.studentEmail, 'Student')}
-              stats={[{ label: 'Surveys submitted', value: surveysSubmitted }]}
+              stats={[{ label: 'Surveys this visit', value: surveysSubmitted }]}
             />
           </div>
         )}
@@ -541,8 +514,17 @@ export default function StudentSurveyPage() {
             </div>
 
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-              <Link href="/student" className="btn-primary">
-                Go to My Dashboard
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => {
+                  setIsSubmittedConfirmed(false)
+                }}
+              >
+                Submit Another Response
+              </button>
+              <Link href="/dashboard" className="btn-primary">
+                Go to School Dashboard
               </Link>
             </div>
           </div>
