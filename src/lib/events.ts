@@ -1,5 +1,5 @@
 // ================================================================
-// EduFit Nepal — Student Events & Competitions Finder
+// Ed-Vantage — Student Events & Competitions Finder
 // BNKS_Hackathon_Student_Events_Competitions_MVP.md §"MVP Features"
 //
 // Hand-curated demo dataset. Every record carries a source URL,

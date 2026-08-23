@@ -4,7 +4,7 @@ import { CheckCircle, ArrowRight } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Request Received',
-  description: 'Thank you for reaching out to EduFit Nepal. We will be in touch within 2 business days.',
+  description: 'Thank you for reaching out to Ed-Vantage. We will be in touch within 2 business days.',
 }
 
 export default function ThankYouPage() {
@@ -34,7 +34,7 @@ export default function ThankYouPage() {
 
       <h1 style={{ marginBottom: '12px' }}>We got your message</h1>
       <p className="body-text" style={{ fontSize: '15px', lineHeight: 1.7, marginBottom: '32px' }}>
-        Thank you for reaching out. The EduFit Nepal team will be in touch within
+        Thank you for reaching out. The Ed-Vantage team will be in touch within
         2 business days to discuss your pilot or answer your questions.
       </p>
 
@@ -43,7 +43,7 @@ export default function ThankYouPage() {
         <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {[
             { label: 'Read how the scoring works', href: '/#how-it-works' },
-            { label: 'Review the research behind EduFit', href: '/#research' },
+            { label: 'Review the research behind Ed-Vantage', href: '/#research' },
             { label: 'Read the privacy policy', href: '/privacy' },
           ].map((item) => (
             <li key={item.label}>

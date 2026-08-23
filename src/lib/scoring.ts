@@ -1,5 +1,5 @@
 // ================================================================
-// EduFit Nepal — Compatibility / Readiness Scoring Engine
+// Ed-Vantage — Compatibility / Readiness Scoring Engine
 //
 // MASTER_PROMPT.md §"Non-negotiable architecture" rule #1:
 //   Deterministic. Pure rule-based logic. ZERO AI/LLM/API calls.

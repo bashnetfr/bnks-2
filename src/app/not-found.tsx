@@ -37,14 +37,14 @@ export default function NotFound() {
 
       <h1 style={{ fontSize: '20px', marginBottom: '10px' }}>Page not found</h1>
       <p className="body-text" style={{ marginBottom: '32px' }}>
-        This page doesn&apos;t exist or has been moved. EduFit Nepal has: a home page,
+        This page doesn&apos;t exist or has been moved. Ed-Vantage has: a home page,
         a school assessment dashboard, a student survey, a pricing page, and a privacy policy.
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
         <Link href="/" className="btn-primary">
           <BarChart2 size={14} aria-hidden="true" />
-          Back to EduFit Nepal
+          Back to Ed-Vantage
         </Link>
         <Link href="/dashboard" className="btn-secondary" style={{ fontSize: '13px' }}>
           <ArrowLeft size={13} aria-hidden="true" />

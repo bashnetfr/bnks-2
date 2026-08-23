@@ -6,11 +6,11 @@ import {
 } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'EduFit Nepal — EdTech Readiness Assessment for Schools',
+  title: 'Ed-Vantage — EdTech Readiness Assessment for Schools',
   description:
-    'EduFit Nepal helps NGOs, municipalities and school networks evaluate whether an EdTech tool is right for their schools — before they spend the budget. Built on World Bank ETRI research.',
+    'Ed-Vantage helps NGOs, municipalities and school networks evaluate whether an EdTech tool is right for their schools — before they spend the budget. Built on World Bank ETRI research.',
   openGraph: {
-    title: 'EduFit Nepal — Know Before You Buy',
+    title: 'Ed-Vantage — Know Before You Buy',
     description:
       'A decision-intelligence platform that analyses school environment, student accessibility, and readiness before recommending EdTech.',
   },
@@ -26,7 +26,7 @@ const FAQ = [
     a: 'Student survey responses are stored per school, not per individual student. Teacher-facing views show only aggregate completion counts ("18 of 24 submitted") — never individual answers. Students are told this explicitly before they answer. We collect only what is needed for the readiness assessment.',
   },
   {
-    q: 'What does EduFit Nepal cost?',
+    q: 'What does Ed-Vantage cost?',
     a: 'We are in pilot phase. The first pilot with a real NGO or municipality is free. Long-term direction is government-funded access — a ministry funds the platform and distributes it to schools and NGOs under them at no cost. See the Pricing page for details.',
   },
   {
@@ -35,7 +35,7 @@ const FAQ = [
   },
   {
     q: 'How is this different from just using the free World Bank ETRI tool directly?',
-    a: 'The World Bank ETRI framework is a research instrument. EduFit Nepal takes that framework and makes it actionable: it runs the assessment, blends school-reported data with student-reported ground truth, matches results to specific EdTech tools, and produces a plain-language explanation with a 90-day action plan. ETRI tells you the dimensions to measure; EduFit tells you what to do with the result.',
+    a: 'The World Bank ETRI framework is a research instrument. Ed-Vantage takes that framework and makes it actionable: it runs the assessment, blends school-reported data with student-reported ground truth, matches results to specific EdTech tools, and produces a plain-language explanation with a 90-day action plan. ETRI tells you the dimensions to measure; Ed-Vantage tells you what to do with the result.',
   },
 ]
 
@@ -105,7 +105,7 @@ export default function HomePage() {
             lineHeight: 1.7,
           }}
         >
-          EduFit Nepal analyses a school&apos;s environment, student accessibility, and
+          Ed-Vantage analyses a school&apos;s environment, student accessibility, and
           readiness — then tells you whether an EdTech tool should be deployed there,
           and exactly what needs to change first if not.
         </p>
@@ -215,7 +215,7 @@ export default function HomePage() {
           <p className="body-text" style={{ lineHeight: 1.8, maxWidth: '700px' }}>
             When a school deploys an EdTech tool it isn&apos;t ready for, the outcome
             isn&apos;t just a wasted budget — it&apos;s months of disrupted lessons, teacher
-            frustration, and eroded trust in technology. EduFit Nepal prevents that by
+            frustration, and eroded trust in technology. Ed-Vantage prevents that by
             making the readiness question answerable before the decision, not after it.
             The result is institutions that deploy successfully on the first attempt,
             and students who get reliable access to tools that actually work in their context.
@@ -288,7 +288,7 @@ export default function HomePage() {
               — due to absent standards and limited ICT curriculum integration.
             </p>
             <p className="body-text" style={{ lineHeight: 1.8 }}>
-              EduFit Nepal&apos;s scoring engine weights Teacher Readiness accordingly and
+              Ed-Vantage&apos;s scoring engine weights Teacher Readiness accordingly and
               flags it explicitly when it&apos;s below threshold — because that finding is
               locally evidenced, not hypothetical.
             </p>
@@ -530,7 +530,7 @@ export default function HomePage() {
         >
           <div className="nav-logo">
             <BarChart2 size={16} style={{ color: 'var(--primary)' }} aria-hidden="true" />
-            EduFit <span className="logo-accent">Nepal</span>
+            Ed-<span className="logo-accent">Vantage</span>
           </div>
           <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
             <Link href="/privacy" className="nav-link" style={{ fontSize: '13px' }}>
@@ -550,7 +550,7 @@ export default function HomePage() {
             </Link>
           </div>
           <p className="meta-text">
-            © {new Date().getFullYear()} EduFit Nepal. Built for the education advancement of Nepal.
+            © {new Date().getFullYear()} Ed-Vantage. Built for the education advancement of Nepal.
           </p>
         </div>
       </footer>

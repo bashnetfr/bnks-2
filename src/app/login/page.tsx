@@ -63,7 +63,7 @@ export default function LoginPage() {
       <div style={{ textAlign: 'center', marginBottom: '32px' }}>
         <div className="badge badge-primary" style={{ marginBottom: '12px', display: 'inline-flex' }}>
           <Sparkles size={12} aria-hidden="true" />
-          EduFit Nepal Portal
+          Ed-Vantage Portal
         </div>
         <h1>Log In</h1>
         <p className="body-text" style={{ marginTop: '8px' }}>

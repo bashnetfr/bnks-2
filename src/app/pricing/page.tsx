@@ -5,7 +5,7 @@ import { CheckCircle, ArrowRight } from 'lucide-react'
 export const metadata: Metadata = {
   title: 'Pricing',
   description:
-    'EduFit Nepal pricing: free pilot phase for NGOs and municipalities. Long-term direction is government-funded access for schools across Nepal.',
+    'Ed-Vantage pricing: free pilot phase for NGOs and municipalities. Long-term direction is government-funded access for schools across Nepal.',
 }
 
 export default function PricingPage() {
@@ -56,7 +56,7 @@ export default function PricingPage() {
               'AI explanation + 90-day action plan',
               'Student Event Finder access',
               'Reality-gap flagging',
-              'Direct access to EduFit team',
+              'Direct access to Ed-Vantage team',
             ].map((item) => (
               <li
                 key={item}

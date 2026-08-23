@@ -3,16 +3,16 @@ import './globals.css'
 import TopNav from '@/components/TopNav'
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://edufit.nepal'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://ed-vantage.np'),
   title: {
-    default: 'EduFit Nepal — EdTech Readiness Assessment for Schools',
-    template: '%s | EduFit Nepal',
+    default: 'Ed-Vantage — EdTech Readiness Assessment for Schools',
+    template: '%s | Ed-Vantage',
   },
   description:
-    'EduFit Nepal helps NGOs, municipalities and school networks evaluate whether an EdTech tool is right for their schools — before they spend a budget on it.',
+    'Ed-Vantage helps NGOs, municipalities and school networks evaluate whether an EdTech tool is right for their schools — before they spend a budget on it.',
   openGraph: {
     type: 'website',
-    siteName: 'EduFit Nepal',
+    siteName: 'Ed-Vantage',
     images: [{ url: '/og-image.png', width: 1200, height: 630 }],
   },
   twitter: {

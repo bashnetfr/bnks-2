@@ -1,5 +1,5 @@
 // ================================================================
-// EduFit Nepal — Single source of truth for all data shapes
+// Ed-Vantage — Single source of truth for all data shapes
 // MASTER_PROMPT.md §"Non-negotiable architecture" rule #4
 // ================================================================
 

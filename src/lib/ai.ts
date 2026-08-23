@@ -1,5 +1,5 @@
 // ================================================================
-// EduFit Nepal — AI Explanation Layer
+// Ed-Vantage — AI Explanation Layer
 //
 // MASTER_PROMPT.md §"Non-negotiable architecture" rule #2:
 //   This layer EXPLAINS. It never calculates, overrides, or

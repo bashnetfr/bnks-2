@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import {
   BarChart2, ShieldCheck, CheckCircle2, Award,
   ExternalLink, Sparkles, Smartphone, Wifi, Clock, Lock,
-  CalendarDays, MapPin
+  CalendarDays, MapPin, MessageCircle
 } from 'lucide-react'
 import type {
   StudentSurvey,
@@ -134,19 +134,26 @@ export default function StudentSurveyPage() {
 
   return (
     <div className="app-shell">
-      {/* Left Rail: EduFit logo + logged-in student profile (Personal.md §1) */}
+      {/* Left Rail: Ed-Vantage logo + logged-in student profile (Personal.md §1) */}
       <aside className="sidebar">
         <div className="sidebar-logo">
           <Link href="/" className="nav-logo">
             <BarChart2 size={20} style={{ color: 'var(--primary)' }} aria-hidden="true" />
-            <span>EduFit <span className="logo-accent">Nepal</span></span>
+            <span>Ed-<span className="logo-accent">Vantage</span></span>
           </Link>
           <div className="meta-text" style={{ fontSize: '11px', marginTop: '4px' }}>
             Student Portal
           </div>
         </div>
 
-        <div style={{ flex: 1 }} />
+        <div style={{ flex: 1 }}>
+          <nav style={{ padding: '12px 8px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <Link href="/community" className="nav-item">
+              <MessageCircle size={18} />
+              Community Hub
+            </Link>
+          </nav>
+        </div>
 
         {studentAuth && (
           <div style={{ padding: '12px', borderTop: '1px solid var(--border)' }}>

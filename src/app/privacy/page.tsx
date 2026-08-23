@@ -4,7 +4,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: 'Privacy Policy',
   description:
-    'EduFit Nepal privacy policy — how we collect, store, and protect student survey data and school assessment data.',
+    'Ed-Vantage privacy policy — how we collect, store, and protect student survey data and school assessment data.',
 }
 
 export default function PrivacyPage() {
@@ -16,7 +16,7 @@ export default function PrivacyPage() {
           Last updated: {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
         <p className="body-text" style={{ marginTop: '12px' }}>
-          EduFit Nepal collects real student data and school data. This policy is specific
+          Ed-Vantage collects real student data and school data. This policy is specific
           to what we collect — not generic boilerplate. If you are an NGO or municipality
           evaluating this platform for adoption, read this in full.
         </p>
@@ -25,7 +25,7 @@ export default function PrivacyPage() {
       {[
         {
           heading: 'Who operates this platform',
-          body: `EduFit Nepal is a decision-intelligence platform currently in pilot phase. It is not operated by a government ministry. Data collected during the pilot is used only to produce readiness assessments and to improve the platform.`,
+          body: `Ed-Vantage is a decision-intelligence platform currently in pilot phase. It is not operated by a government ministry. Data collected during the pilot is used only to produce readiness assessments and to improve the platform.`,
         },
         {
           heading: 'What data we collect',
@@ -47,7 +47,7 @@ Students are informed of this explicitly before they begin the survey: "Your tea
         },
         {
           heading: 'How assessment data is used',
-          body: `School assessment data and aggregated student survey data are used by the EduFit Nepal compatibility engine to compute a readiness score. The AI explanation layer receives only the already-computed score — not raw survey data — to generate plain-language explanations. No raw student data is sent to any AI API.`,
+          body: `School assessment data and aggregated student survey data are used by the Ed-Vantage compatibility engine to compute a readiness score. The AI explanation layer receives only the already-computed score — not raw survey data — to generate plain-language explanations. No raw student data is sent to any AI API.`,
         },
         {
           heading: 'Data retention',
@@ -67,7 +67,7 @@ Students are informed of this explicitly before they begin the survey: "Your tea
         },
         {
           heading: 'Questions',
-          body: `If you have questions about this policy, contact the EduFit Nepal team directly. This is a pilot-stage product — we are reachable and will respond.`,
+          body: `If you have questions about this policy, contact the Ed-Vantage team directly. This is a pilot-stage product — we are reachable and will respond.`,
         },
       ].map((section) => (
         <section key={section.heading} style={{ marginBottom: '32px' }}>

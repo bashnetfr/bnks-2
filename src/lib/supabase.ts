@@ -1,5 +1,5 @@
 // ================================================================
-// EduFit Nepal — Supabase Client Initialization
+// Ed-Vantage — Supabase Client Initialization
 // ================================================================
 
 import { createClient } from '@supabase/supabase-js'

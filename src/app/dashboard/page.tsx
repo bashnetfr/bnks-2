@@ -7,7 +7,7 @@ import {
   LayoutDashboard, School, FileText, CheckCircle2,
   AlertTriangle, HelpCircle, ArrowRight, RefreshCw,
   Sparkles, Layers, ShieldAlert, ChevronRight, BarChart2,
-  Users, Server, GraduationCap, Award
+  Users, Server, GraduationCap, Award, MessageCircle
 } from 'lucide-react'
 import type {
   SchoolProfile,
@@ -235,7 +235,7 @@ export default function DashboardPage() {
         <div className="sidebar-logo">
           <Link href="/" className="nav-logo">
             <BarChart2 size={20} style={{ color: 'var(--primary)' }} />
-            EduFit <span className="logo-accent">Nepal</span>
+            Ed-<span className="logo-accent">Vantage</span>
           </Link>
           <div className="meta-text" style={{ fontSize: '11px', marginTop: '4px' }}>
             Decision Intelligence Platform
@@ -277,6 +277,11 @@ export default function DashboardPage() {
             <Users size={18} />
             Student Surveys ({studentSurveys.length})
           </button>
+
+          <Link href="/community" className="nav-item">
+            <MessageCircle size={18} />
+            Community Hub
+          </Link>
 
           <div className="divider" style={{ margin: '16px 0' }} />
 
