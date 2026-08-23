@@ -1,16 +1,9 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
 import TopNav from '@/components/TopNav'
 
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-})
-
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://edufit.nepal'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://edufit.nepal'),
   title: {
     default: 'EduFit Nepal — EdTech Readiness Assessment for Schools',
     template: '%s | EduFit Nepal',
@@ -35,11 +28,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={inter.variable}>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      </head>
+    <html lang="en">
       <body>
         <TopNav />
         <main>{children}</main>

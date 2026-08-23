@@ -54,7 +54,7 @@ export default function PricingPage() {
               'Unlimited school assessments',
               'Student digital-access surveys',
               'AI explanation + 90-day action plan',
-              'Resource Hub access for students',
+              'Student Event Finder access',
               'Reality-gap flagging',
               'Direct access to EduFit team',
             ].map((item) => (

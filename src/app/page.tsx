@@ -67,8 +67,8 @@ const FEATURES = [
   },
   {
     icon: BookOpen,
-    title: 'Student Resource Hub',
-    desc: 'Curated scholarships, competitions and learning resources surfaced to students as a participation incentive — API-first for future integration.',
+    title: 'Student Event Finder',
+    desc: 'Hackathons, competitions, workshops and volunteering across Nepal — deadlines, fees, prizes, eligibility and verification status surfaced to students as a participation incentive.',
   },
 ]
 
@@ -544,6 +544,9 @@ export default function HomePage() {
             </Link>
             <Link href="/#research" className="nav-link" style={{ fontSize: '13px' }}>
               Research
+            </Link>
+            <Link href="/events" className="nav-link" style={{ fontSize: '13px' }}>
+              Events
             </Link>
           </div>
           <p className="meta-text">

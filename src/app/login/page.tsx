@@ -1,125 +1,98 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { GraduationCap, Users, ShieldCheck, Loader2 } from 'lucide-react'
-import { createBrowserSupabaseClient } from '@/lib/supabase'
-import type { AppRole } from '@/components/AuthGuard'
+import Link from 'next/link'
+import { BookOpen, GraduationCap, Lock, Sparkles } from 'lucide-react'
+import {
+  getStaffAuth,
+  getStudentAuth,
+  setStaffAuth,
+  setStudentAuth,
+} from '@/lib/auth'
 
-const DEMO_PASSWORD = 'Test@2026'
-
-interface LoginResponse {
-  success: boolean
-  error?: string
-  data?: {
-    accessToken: string
-    refreshToken: string
-    role: AppRole
-    fullName: string
-  }
-}
+type PortalRole = 'student' | 'teacher'
 
 export default function LoginPage() {
   const router = useRouter()
 
-  const [role, setRole] = useState<AppRole>('teacher')
+  const [role, setRole] = useState<PortalRole>('student')
+  const [authMethod, setAuthMethod] = useState<'school_email' | 'school_code'>('school_email')
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [schoolCode, setSchoolCode] = useState('')
-  const [accessCode, setAccessCode] = useState('')
-
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [schoolCode, setSchoolCode] = useState('SCH-KTM-2026')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  function fillDemo(demoRole: AppRole) {
-    setRole(demoRole)
-    setEmail(demoRole === 'teacher' ? 'teacher.ktm@edufit-test.edu.np' : 'student.ktm@edufit-test.edu.np')
-    setPassword(DEMO_PASSWORD)
-    setSchoolCode('SCH-KTM-2026')
-    setAccessCode(demoRole === 'teacher' ? 'TCH-KTM-001' : 'STU-KTM-001')
-    setErrorMsg(null)
-  }
+  // Already signed in this session? Route straight to the right portal.
+  useEffect(() => {
+    if (getStudentAuth()) router.replace('/survey')
+    else if (getStaffAuth()) router.replace('/dashboard')
+  }, [router])
 
-  async function handleLogin(e: React.FormEvent) {
+  function handleLogin(e: React.FormEvent) {
     e.preventDefault()
-    setIsSubmitting(true)
+    if (authMethod === 'school_email' && !email.trim()) {
+      setErrorMsg('Please enter your school-issued email address.')
+      return
+    }
+    if (authMethod === 'school_code' && !schoolCode.trim()) {
+      setErrorMsg('Please enter your school access code.')
+      return
+    }
+
     setErrorMsg(null)
-
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, schoolCode, accessCode, role }),
+    if (role === 'student') {
+      setStudentAuth({
+        authMethod,
+        studentEmail: authMethod === 'school_email' ? email.trim() : undefined,
+        schoolCode: authMethod === 'school_code' ? schoolCode.trim() : '',
       })
-      const json: LoginResponse = await res.json()
-
-      if (!res.ok || !json.success || !json.data) {
-        setErrorMsg(json.error ?? 'Invalid credentials. Check your email, password, school code, and personal code.')
-        return
-      }
-
-      // Establish the Supabase session in this browser, then route by role
-      const supabase = createBrowserSupabaseClient()
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token: json.data.accessToken,
-        refresh_token: json.data.refreshToken,
+      router.replace('/survey')
+    } else {
+      setStaffAuth({
+        role,
+        staffEmail: authMethod === 'school_email' ? email.trim() : undefined,
+        schoolCode: authMethod === 'school_code' ? schoolCode.trim() : '',
       })
-      if (sessionError) {
-        setErrorMsg('Signed in, but failed to start your session. Please try again.')
-        return
-      }
-
-      router.replace(json.data.role === 'teacher' ? '/teacher' : '/student')
-    } catch {
-      setErrorMsg('Could not reach the server. Check your internet connection and try again.')
-    } finally {
-      setIsSubmitting(false)
+      router.replace('/dashboard')
     }
   }
 
   return (
-    <main style={{ maxWidth: '520px', margin: '0 auto', padding: '56px 20px 80px' }}>
-      <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+    <main style={{ maxWidth: '520px', margin: '0 auto', padding: '64px 20px' }}>
+      {/* Header */}
+      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
         <div className="badge badge-primary" style={{ marginBottom: '12px', display: 'inline-flex' }}>
-          <ShieldCheck size={12} aria-hidden="true" />
-          School Member Access
+          <Sparkles size={12} aria-hidden="true" />
+          EduFit Nepal Portal
         </div>
         <h1>Log In</h1>
         <p className="body-text" style={{ marginTop: '8px' }}>
-          Sign in with your school email and password, school code, and your personal code.
+          One login for students and teachers — choose how you&apos;re signing in below.
         </p>
       </div>
 
+      {/* Login Card */}
       <div className="card" style={{ padding: '32px' }}>
-        {/* Role tabs */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-          <button
-            type="button"
-            onClick={() => { setRole('teacher'); setErrorMsg(null) }}
-            className="btn-secondary"
-            style={{
-              flex: 1, justifyContent: 'center',
-              background: role === 'teacher' ? 'var(--primary-soft)' : undefined,
-              color: role === 'teacher' ? 'var(--primary)' : undefined,
-              borderColor: role === 'teacher' ? 'var(--primary)' : undefined,
-            }}
-          >
-            <Users size={15} aria-hidden="true" /> Teacher
-          </button>
-          <button
-            type="button"
-            onClick={() => { setRole('student'); setErrorMsg(null) }}
-            className="btn-secondary"
-            style={{
-              flex: 1, justifyContent: 'center',
-              background: role === 'student' ? 'var(--primary-soft)' : undefined,
-              color: role === 'student' ? 'var(--primary)' : undefined,
-              borderColor: role === 'student' ? 'var(--primary)' : undefined,
-            }}
-          >
-            <GraduationCap size={15} aria-hidden="true" /> Student
-          </button>
+        <div
+          style={{
+            width: '44px',
+            height: '44px',
+            borderRadius: '50%',
+            background: 'var(--primary-soft)',
+            color: 'var(--primary)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 16px',
+          }}
+        >
+          <Lock size={20} aria-hidden="true" />
         </div>
+
+        <h2 style={{ fontSize: '18px', marginBottom: '8px', textAlign: 'center' }}>Who are you?</h2>
+        <p className="meta-text" style={{ marginBottom: '20px', textAlign: 'center' }}>
+          Your role determines which portal you enter.
+        </p>
 
         {errorMsg && (
           <div className="badge badge-danger" style={{ width: '100%', padding: '10px 14px', marginBottom: '16px', borderRadius: '8px' }}>
@@ -127,98 +100,105 @@ export default function LoginPage() {
           </div>
         )}
 
+        {/* Role Selector */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+          {([
+            { id: 'student', label: 'Student', icon: BookOpen },
+            { id: 'teacher', label: 'Teacher', icon: GraduationCap },
+          ] as const).map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              type="button"
+              className={`btn-secondary ${role === id ? 'active' : ''}`}
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                gap: '6px',
+                background: role === id ? 'var(--primary-soft)' : undefined,
+                color: role === id ? 'var(--primary)' : undefined,
+                borderColor: role === id ? 'var(--primary)' : undefined,
+              }}
+              onClick={() => setRole(id)}
+            >
+              <Icon size={14} aria-hidden="true" />
+              {label}
+            </button>
+          ))}
+        </div>
+
         <form onSubmit={handleLogin}>
-          <div className="form-group">
-            <label htmlFor="login-email">School Email Address</label>
-            <input
-              id="login-email"
-              type="email"
-              autoComplete="email"
-              placeholder="your.name@school.edu.np"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+          {/* Auth Method Selector — available to both students and staff */}
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+            <button
+              type="button"
+              className={`btn-secondary ${authMethod === 'school_email' ? 'active' : ''}`}
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                background: authMethod === 'school_email' ? 'var(--primary-soft)' : undefined,
+                color: authMethod === 'school_email' ? 'var(--primary)' : undefined,
+                borderColor: authMethod === 'school_email' ? 'var(--primary)' : undefined,
+              }}
+              onClick={() => setAuthMethod('school_email')}
+            >
+              {role === 'student' ? 'School Email' : 'Staff Email'}
+            </button>
+            <button
+              type="button"
+              className={`btn-secondary ${authMethod === 'school_code' ? 'active' : ''}`}
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                background: authMethod === 'school_code' ? 'var(--primary-soft)' : undefined,
+                color: authMethod === 'school_code' ? 'var(--primary)' : undefined,
+                borderColor: authMethod === 'school_code' ? 'var(--primary)' : undefined,
+              }}
+              onClick={() => setAuthMethod('school_code')}
+            >
+              School Code
+            </button>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="login-password">Password</label>
-            <input
-              id="login-password"
-              type="password"
-              autoComplete="current-password"
-              placeholder="Your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="form-grid">
+          {authMethod === 'school_email' ? (
             <div className="form-group">
-              <label htmlFor="login-school-code">School Code</label>
+              <label htmlFor="login-email">{role === 'student' ? 'Student Email Address' : 'Staff Email Address'}</label>
+              <input
+                id="login-email"
+                type="email"
+                placeholder={role === 'student' ? 'student.name@school.edu.np' : 'teacher.name@school.edu.np'}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+          ) : (
+            <div className="form-group">
+              <label htmlFor="login-school-code">School Access Code</label>
               <input
                 id="login-school-code"
                 type="text"
-                autoComplete="off"
                 placeholder="e.g. SCH-KTM-2026"
                 value={schoolCode}
                 onChange={(e) => setSchoolCode(e.target.value)}
                 required
               />
             </div>
+          )}
 
-            <div className="form-group">
-              <label htmlFor="login-access-code">{role === 'teacher' ? 'Teacher Code' : 'Student Code'}</label>
-              <input
-                id="login-access-code"
-                type="text"
-                autoComplete="off"
-                placeholder={role === 'teacher' ? 'e.g. TCH-KTM-001' : 'e.g. STU-KTM-001'}
-                value={accessCode}
-                onChange={(e) => setAccessCode(e.target.value)}
-                required
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="btn-primary w-full"
-            style={{ justifyContent: 'center', marginTop: '12px', opacity: isSubmitting ? 0.7 : 1 }}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 size={16} className="animate-spin" /> Verifying credentials…
-              </>
-            ) : (
-              <>Log In as {role === 'teacher' ? 'Teacher' : 'Student'}</>
-            )}
+          <button type="submit" className="btn-primary w-full" style={{ justifyContent: 'center', marginTop: '12px' }}>
+            {role === 'student' ? 'Continue to Student Portal' : 'Enter Assessment Dashboard'}
           </button>
         </form>
 
-        <p className="meta-text" style={{ textAlign: 'center', marginTop: '12px' }}>
-          All four details must match your school&apos;s records.
+        <p className="meta-text" style={{ textAlign: 'center', marginTop: '16px' }}>
+          Students get the confidential survey portal. Staff get the readiness assessment dashboard.
         </p>
       </div>
 
-      {/* Test credentials (remove before production launch) */}
-      <div className="card" style={{ padding: '16px 20px', marginTop: '20px', background: 'var(--surface-muted)', borderColor: 'var(--border)' }}>
-        <div className="meta-text" style={{ fontSize: '11px', marginBottom: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-          Demo test IDs — one click fills the form
-        </div>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button type="button" className="btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => fillDemo('teacher')}>
-            Fill Teacher (SCH-KTM-2026 / TCH-KTM-001)
-          </button>
-          <button type="button" className="btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => fillDemo('student')}>
-            Fill Student (SCH-KTM-2026 / STU-KTM-001)
-          </button>
-        </div>
-        <p className="meta-text" style={{ fontSize: '11px', marginTop: '8px' }}>
-          Full case matrix lives in TEST_ACCOUNTS.md. Password for all seeded accounts: {DEMO_PASSWORD}
-        </p>
+      <div style={{ textAlign: 'center', marginTop: '20px' }}>
+        <Link href="/" className="meta-text" style={{ textDecoration: 'none' }}>
+          ← Back to homepage
+        </Link>
       </div>
     </main>
   )

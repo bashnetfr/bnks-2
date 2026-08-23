@@ -2,28 +2,47 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
-  BookOpen, ShieldCheck, CheckCircle2, Award,
-  ExternalLink, Sparkles, Smartphone, Wifi, Clock, Lock
+  BarChart2, ShieldCheck, CheckCircle2, Award,
+  ExternalLink, Sparkles, Smartphone, Wifi, Clock, Lock,
+  CalendarDays, MapPin
 } from 'lucide-react'
 import type {
   DeviceOwnership,
   InternetAccess,
   DigitalConfidence,
-  LearningPreference,
-  Resource
+  LearningPreference
 } from '@/lib/types'
-import { createBrowserSupabaseClient } from '@/lib/supabase'
-import UserBadge from '@/components/UserBadge'
-import TopNav from '@/components/TopNav'
+import { getUpcomingEvents } from '@/lib/events'
+import { getDisplayName, getStudentAuth, type StudentAuth } from '@/lib/auth'
+import UserProfileCard from '@/components/UserProfileCard'
+
+const TYPE_LABELS: Record<string, string> = {
+  competition: 'Competition',
+  hackathon: 'Hackathon',
+  workshop: 'Workshop',
+  bootcamp: 'Bootcamp',
+  seminar: 'Seminar',
+  conference: 'Conference',
+  career_event: 'Career event',
+  volunteering: 'Volunteering',
+  networking: 'Networking',
+  other: 'Event',
+}
 
 export default function StudentSurveyPage() {
-  // Auth state — page renders behind AuthGuard (student session required)
-  const [memberInfo, setMemberInfo] = useState<{ schoolId: string; fullName: string } | null>(null)
+  const router = useRouter()
 
-  // Resource Hub state (Surfaced BEFORE survey as participation incentive)
-  const [resources, setResources] = useState<Resource[]>([])
-  const [loadingResources, setLoadingResources] = useState(true)
+  // Auth state — session-gated via /survey/login
+  const [studentAuth, setStudentAuth] = useState<StudentAuth | null>(null)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+
+  // Upcoming events preview (Surfaced BEFORE survey as participation incentive)
+  const [loadingEvents, setLoadingEvents] = useState(true)
+
+  // Profile activity summary (Personal.md §1)
+  const [surveysSubmitted, setSurveysSubmitted] = useState(0)
 
   // Survey Form state
   const [deviceOwnership, setDeviceOwnership] = useState<DeviceOwnership>('personal_smartphone')
@@ -41,46 +60,34 @@ export default function StudentSurveyPage() {
   const [submissionTime, setSubmissionTime] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  // Fetch Resources for Incentive Section
+  // Gate access: redirect to login if no student session exists
   useEffect(() => {
-    async function fetchIncentiveResources() {
-      try {
-        const res = await fetch('/api/resources')
-        const data = await res.json()
-        if (data.success) {
-          setResources(data.data.slice(0, 4))
-        }
-      } catch (err) {
-        console.error('Failed to fetch resources:', err)
-      } finally {
-        setLoadingResources(false)
-      }
+    const auth = getStudentAuth()
+    if (!auth) {
+      router.replace('/login')
+      return
     }
-    fetchIncentiveResources()
-  }, [])
+    setStudentAuth(auth)
+    setIsCheckingAuth(false)
+  }, [router])
 
-  // Load the signed-in student's membership (RLS: only own row is visible)
+  // Load activity summary for the profile card once authenticated
   useEffect(() => {
-    async function loadMembership() {
-      try {
-        const supabase = createBrowserSupabaseClient()
-        const { data: sessionData } = await supabase.auth.getSession()
-        if (!sessionData.session) return
-
-        const { data, error } = await supabase
-          .from('school_members')
-          .select('id, full_name, school_id')
-          .eq('user_id', sessionData.session.user.id)
-          .maybeSingle()
-
-        if (!error && data) {
-          setMemberInfo({ schoolId: data.school_id, fullName: data.full_name })
-        }
-      } catch (err) {
-        console.error('Failed to load membership:', err)
-      }
+    if (!studentAuth) return
+    try {
+      const stored = localStorage.getItem('edufit_student_surveys')
+      if (stored) setSurveysSubmitted(JSON.parse(stored).length)
+    } catch (e) {
+      console.error('Failed to load survey count:', e)
     }
-    loadMembership()
+  }, [studentAuth])
+
+  // Load upcoming events preview for incentive section
+  const upcomingEvents = getUpcomingEvents(4)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoadingEvents(false), 400)
+    return () => clearTimeout(timer)
   }, [])
 
   function toggleLimitation(item: string) {
@@ -93,8 +100,23 @@ export default function StudentSurveyPage() {
 
   async function handleSubmitSurvey(e: React.FormEvent) {
     e.preventDefault()
+    if (!studentAuth) return
     setIsSubmitting(true)
     setErrorMsg(null)
+
+    const payload: StudentSurvey = {
+      schoolId: studentAuth.schoolCode || 'SCH-KTM-DEFAULT',
+      authMethod: studentAuth.authMethod,
+      deviceOwnership,
+      internetAccess,
+      averageDailyScreenTimeMinutes: Number(screenTime),
+      learningPreference: learningPref,
+      digitalConfidence,
+      hasQuietStudySpace: quietSpace,
+      accessLimitations: limitations,
+      completedOnSharedDevice,
+      submittedAt: new Date().toISOString(),
+    }
 
     try {
       const supabase = createBrowserSupabaseClient()
@@ -128,6 +150,7 @@ export default function StudentSurveyPage() {
       // ONLY set confirmed success state AFTER write is completed
       setSubmissionTime(nowIso)
       setIsSubmittedConfirmed(true)
+      setSurveysSubmitted((count) => count + 1)
     } catch (err) {
       console.error('Survey submission error:', err)
       setErrorMsg('Failed to confirm your submission. Please check your internet connection and try again.')
@@ -137,10 +160,35 @@ export default function StudentSurveyPage() {
   }
 
   return (
-    <>
-      <TopNav />
+    <div className="app-shell">
+      {/* Left Rail: EduFit logo + logged-in student profile (Personal.md §1) */}
+      <aside className="sidebar">
+        <div className="sidebar-logo">
+          <Link href="/" className="nav-logo">
+            <BarChart2 size={20} style={{ color: 'var(--primary)' }} aria-hidden="true" />
+            <span>EduFit <span className="logo-accent">Nepal</span></span>
+          </Link>
+          <div className="meta-text" style={{ fontSize: '11px', marginTop: '4px' }}>
+            Student Portal
+          </div>
+        </div>
 
-      <main style={{ maxWidth: '840px', margin: '0 auto', padding: '40px 20px 80px' }}>
+        <div style={{ flex: 1 }} />
+
+        {studentAuth && (
+          <div style={{ padding: '12px', borderTop: '1px solid var(--border)' }}>
+            <UserProfileCard
+              auth={studentAuth}
+              kind="student"
+              displayName={getDisplayName(studentAuth.studentEmail, 'Student')}
+              stats={[{ label: 'Surveys submitted', value: surveysSubmitted }]}
+            />
+          </div>
+        )}
+      </aside>
+
+      <main className="main-content" style={{ padding: '40px 32px 80px' }}>
+        <div style={{ maxWidth: '840px', margin: '0 auto' }}>
         {/* Header Banner */}
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <div className="badge badge-primary" style={{ marginBottom: '12px', display: 'inline-flex' }}>
@@ -149,61 +197,71 @@ export default function StudentSurveyPage() {
           </div>
           <h1>Student Access & Opportunity Portal</h1>
           <p className="body-text" style={{ marginTop: '8px', maxWidth: '600px', margin: '8px auto 0' }}>
-            Discover scholarships and learning opportunities while helping your school understand real digital access at home.
+            Discover upcoming competitions, hackathons and events while helping your school understand real digital access at home.
           </p>
         </div>
 
-        {/* Signed-in member strip */}
-        <div className="card" style={{ padding: '12px 20px', marginBottom: '24px', display: 'flex', justifyContent: 'flex-end' }}>
-          <UserBadge compact />
-        </div>
+        {/* Auth Gate: verifying session or redirecting to login */}
+        {isCheckingAuth && (
+          <div className="card" style={{ padding: '32px', maxWidth: '520px', margin: '0 auto', textAlign: 'center' }}>
+            <Lock size={24} style={{ color: 'var(--primary)', margin: '0 auto 12px' }} aria-hidden="true" />
+            <h2 style={{ fontSize: '18px', marginBottom: '8px' }}>Checking your session…</h2>
+            <p className="meta-text">
+              Student login is required to access this portal. Redirecting you to the login page.
+            </p>
+          </div>
+        )}
 
-        {/* Authenticated Flow */}
-        {!isSubmittedConfirmed && (
+        {/* Step 2: Authenticated Flow */}
+        {!isCheckingAuth && studentAuth && !isSubmittedConfirmed && (
           <div>
-            {/* SECTION A: Resource Hub (SURFACED BEFORE SURVEY QUESTIONS AS INCENTIVE) */}
+            {/* SECTION A: Upcoming Events (SURFACED BEFORE SURVEY QUESTIONS AS INCENTIVE) */}
             <div className="card" style={{ padding: '28px', marginBottom: '32px', borderLeft: '4px solid var(--primary)' }}>
               <div className="flex items-center justify-between" style={{ marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
                 <div>
                   <div className="badge badge-success" style={{ marginBottom: '6px' }}>
                     <Award size={12} aria-hidden="true" /> Participation Incentive
                   </div>
-                  <h2 style={{ fontSize: '18px' }}>Student Resource Hub & Opportunities</h2>
+                  <h2 style={{ fontSize: '18px' }}>Upcoming Events &amp; Competitions</h2>
                 </div>
-                <Link href="/api/resources" target="_blank" className="meta-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
-                  View Full API <ExternalLink size={12} />
+                <Link href="/events" target="_blank" className="meta-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
+                  Open Event Finder <ExternalLink size={12} />
                 </Link>
               </div>
 
               <p className="body-text" style={{ marginBottom: '20px' }}>
-                Here are free curated opportunities, scholarships, and learning platforms available to students in Nepal right now:
+                Here are upcoming student events across Nepal closing soon — hackathons, competitions, workshops and more:
               </p>
 
-              {loadingResources ? (
+              {loadingEvents ? (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
                   <div className="skeleton" style={{ height: '100px' }} />
                   <div className="skeleton" style={{ height: '100px' }} />
                 </div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-                  {resources.map((item) => (
-                    <div key={item.id} style={{ padding: '14px', background: 'var(--surface-muted)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
+                  {upcomingEvents.map((event) => (
+                    <Link
+                      key={event.id}
+                      href={`/events/${event.id}`}
+                      style={{ padding: '14px', background: 'var(--surface-muted)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', textDecoration: 'none' }}
+                    >
                       <div className="badge badge-info" style={{ marginBottom: '6px', fontSize: '11px' }}>
-                        {item.type.replace('_', ' ').toUpperCase()}
+                        {TYPE_LABELS[event.eventType]}
                       </div>
-                      <h3 style={{ fontSize: '14px', marginBottom: '4px' }}>{item.title}</h3>
-                      <p className="meta-text" style={{ fontSize: '12px', lineHeight: 1.4, marginBottom: '8px' }}>
-                        {item.description}
+                      <h3 style={{ fontSize: '14px', marginBottom: '4px', color: 'var(--text-primary)' }}>{event.title}</h3>
+                      <p className="meta-text" style={{ fontSize: '12px', lineHeight: 1.4, marginBottom: '8px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <span className="flex items-center gap-1">
+                          <MapPin size={11} aria-hidden="true" /> {event.location} · {event.registrationFee === 0 ? 'Free' : event.registrationFee ? `NPR ${event.registrationFee.toLocaleString('en-US')}` : 'Fee unclear'}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <CalendarDays size={11} aria-hidden="true" /> Closes {new Date(event.registrationDeadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
                       </p>
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{ fontSize: '12px', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                      >
-                        Access Resource <ExternalLink size={12} />
-                      </a>
-                    </div>
+                      <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--primary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        View Event <ExternalLink size={12} />
+                      </span>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -448,7 +506,7 @@ export default function StudentSurveyPage() {
         )}
 
         {/* Step 3: Confirmed Completion View */}
-        {isSubmittedConfirmed && (
+        {!isCheckingAuth && studentAuth && isSubmittedConfirmed && (
           <div className="card" style={{ padding: '40px', textAlign: 'center', maxWidth: '560px', margin: '0 auto' }}>
             <div
               style={{
@@ -489,7 +547,8 @@ export default function StudentSurveyPage() {
             </div>
           </div>
         )}
+        </div>
       </main>
-    </>
+    </div>
   )
 }

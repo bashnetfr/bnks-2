@@ -154,19 +154,166 @@ export interface ExplanationResult {
   fallback: boolean       // true = API failed, raw engine output should stand alone
 }
 
-// --- Resource Hub ---
+// ================================================================
+// Student Events & Competitions Finder
+// BNKS_Hackathon_Student_Events_Competitions_MVP.md §"Event Data Model"
+// ================================================================
 
-export type ResourceType = 'scholarship' | 'competition' | 'learning_resource' | 'digital_material'
+// --- Organizations ---
 
-export interface Resource {
+export type OrganizationType =
+  | 'student_club'
+  | 'college_club'
+  | 'university'
+  | 'ngo'
+  | 'ingo'
+  | 'youth_organization'
+  | 'tech_community'
+  | 'professional_organization'
+  | 'company'
+  | 'government'
+  | 'municipality'
+  | 'community_organization'
+
+export type VerificationStatus =
+  | 'verified_organizer'
+  | 'verified_event'
+  | 'cross_checked'
+  | 'unverified'
+  | 'expired'
+
+export interface Organization {
+  id: string
+  name: string
+  organizationType: OrganizationType
+  description: string
+  location: string
+  website?: string
+  facebook?: string
+  instagram?: string
+  linkedin?: string
+  contact?: string
+  affiliation?: string
+  verificationStatus: Exclude<VerificationStatus, 'expired'>
+  /** Anti-scam warning signals at organizer level — neutral language only */
+  safetyFlags?: string[]
+  sourceUrl?: string
+  lastVerified: string // ISO date
+}
+
+// --- Events ---
+
+export type EventType =
+  | 'competition'
+  | 'hackathon'
+  | 'workshop'
+  | 'bootcamp'
+  | 'seminar'
+  | 'conference'
+  | 'career_event'
+  | 'volunteering'
+  | 'networking'
+  | 'other'
+
+export type EventFormat = 'online' | 'physical' | 'hybrid' | 'unknown'
+
+export type Participation = 'individual' | 'team' | 'both' | 'unknown'
+
+export type EventStatus =
+  | 'upcoming'
+  | 'registration_open'
+  | 'registration_closed'
+  | 'ongoing'
+  | 'completed'
+  | 'cancelled'
+  | 'unknown'
+
+export type EducationLevel =
+  | 'school'
+  | 'see'
+  | 'plus_two'
+  | 'bachelors'
+  | 'masters'
+  | 'recent_graduate'
+
+/** Registration fee: number = NPR amount; null = unknown cost */
+export type RegistrationFee = number | null
+
+export interface EventEligibility {
+  educationLevels: EducationLevel[]
+  minimumAge?: number
+  maximumAge?: number
+  allowedPrograms?: string[]
+  eligibilityNotes?: string
+}
+
+export type RegistrationUrlType = 'official' | 'external' | 'google_form' | 'unknown'
+
+export type EventBenefit =
+  | 'prize'
+  | 'certificate'
+  | 'mentorship'
+  | 'networking'
+  | 'portfolio_project'
+  | 'internship_opportunity'
+  | 'exposure'
+  | 'training'
+
+export interface Event {
   id: string
   title: string
   description: string
-  type: ResourceType
-  url: string
-  eligibility: string     // who can apply / access
-  deadline?: string       // ISO date string, optional
-  provider: string
-  isFree: boolean
-  language: 'nepali' | 'english' | 'both'
+  organizationId: string
+  eventType: EventType
+  category: string            // e.g. 'AI/ML', 'Debate', 'Robotics'
+  subCategory?: string
+  location: string            // city / area label shown on cards
+  district: string
+  province: string
+  venue?: string              // physical venue when applicable
+  format: EventFormat
+  startDatetime: string       // ISO datetime
+  endDatetime: string         // ISO datetime
+  registrationDeadline: string // ISO date
+  registrationUrl: string
+  registrationUrlType: RegistrationUrlType
+  officialEventUrl?: string
+  contactInformation?: string
+  eligibility: EventEligibility
+  participation: Participation
+  teamSizeMin?: number
+  teamSizeMax?: number
+  registrationFee: RegistrationFee
+  prizeInformation?: string   // e.g. 'NPR 100,000' — never guessed per MD quality rules
+  certificateAvailable: boolean
+  skills: string[]
+  benefits: EventBenefit[]
+  sourceUrl: string
+  sourceType: string          // e.g. 'official_website', 'facebook', 'college_notice'
+  verificationStatus: VerificationStatus
+  /** Anti-scam warning signals — neutral language only (MD §Anti-Scam) */
+  safetyFlags: string[]
+  lastVerified: string        // ISO date
+  status: EventStatus
+}
+
+// --- Student Matching ---
+
+export interface StudentEventProfile {
+  educationLevel: EducationLevel
+  interests: string[]         // matched against category + skills
+  location: string            // district name, '' = anywhere
+  preferFree: boolean
+  preferOnline: boolean
+  preferTeam: boolean
+}
+
+export interface MatchReason {
+  ok: boolean
+  text: string
+}
+
+export interface MatchResult {
+  score: number               // 0–100
+  reasons: MatchReason[]
 }
