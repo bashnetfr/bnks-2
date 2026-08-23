@@ -12,8 +12,10 @@ import type {
   DeviceOwnership,
   InternetAccess,
   DigitalConfidence,
-  LearningPreference
+  LearningPreference,
+  StudentSurvey
 } from '@/lib/types'
+import { createBrowserSupabaseClient } from '@/lib/supabase'
 import { getUpcomingEvents } from '@/lib/events'
 import { getDisplayName, getStudentAuth, type StudentAuth } from '@/lib/auth'
 import UserProfileCard from '@/components/UserProfileCard'
@@ -37,6 +39,9 @@ export default function StudentSurveyPage() {
   // Auth state — session-gated via /survey/login
   const [studentAuth, setStudentAuth] = useState<StudentAuth | null>(null)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+
+  // Signed-in student's membership (RLS: only own row is visible)
+  const [memberInfo, setMemberInfo] = useState<{ schoolId: string; fullName: string } | null>(null)
 
   // Upcoming events preview (Surfaced BEFORE survey as participation incentive)
   const [loadingEvents, setLoadingEvents] = useState(true)
@@ -70,6 +75,31 @@ export default function StudentSurveyPage() {
     setStudentAuth(auth)
     setIsCheckingAuth(false)
   }, [router])
+
+  // Load the signed-in student's membership for the survey insert
+  useEffect(() => {
+    if (!studentAuth) return
+    async function loadMembership() {
+      try {
+        const supabase = createBrowserSupabaseClient()
+        const { data: sessionData } = await supabase.auth.getSession()
+        if (!sessionData.session) return
+
+        const { data, error } = await supabase
+          .from('school_members')
+          .select('id, full_name, school_id')
+          .eq('user_id', sessionData.session.user.id)
+          .maybeSingle()
+
+        if (!error && data) {
+          setMemberInfo({ schoolId: data.school_id, fullName: data.full_name })
+        }
+      } catch (err) {
+        console.error('Failed to load membership:', err)
+      }
+    }
+    loadMembership()
+  }, [studentAuth])
 
   // Load activity summary for the profile card once authenticated
   useEffect(() => {

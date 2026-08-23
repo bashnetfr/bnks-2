@@ -89,6 +89,23 @@ export interface StudentSurvey {
   confirmedAt?: string                    // set only after DB write confirmed
 }
 
+// --- Resource Hub ---
+
+export type ResourceType = 'scholarship' | 'competition' | 'learning_resource' | 'digital_material'
+
+export interface Resource {
+  id: string
+  title: string
+  description: string
+  type: ResourceType
+  url: string
+  eligibility: string     // who can apply / access
+  deadline?: string       // ISO date string, optional
+  provider: string
+  isFree: boolean
+  language: 'nepali' | 'english' | 'both'
+}
+
 // --- EdTech Tool Profile ---
 
 export type BandwidthRequirement = 'offline' | 'low' | 'medium' | 'high'
