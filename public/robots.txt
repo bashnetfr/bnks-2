@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Authenticated routes — search engines should not index these
+Disallow: /dashboard
+Disallow: /survey
+
+# Sitemap
+Sitemap: https://edufit.nepal/sitemap.xml

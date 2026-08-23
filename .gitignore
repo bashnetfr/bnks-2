@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+yarn.lock
+package-lock.json
+
+# Next.js build output
+.next/
+build/
+
+# Environment variables (CRITICAL: never commit secrets)
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Debug and temporary files
+.DS_Store
+*.tsbuildinfo
+npm-debug.log*
+.turbo/
+
+# Deployment and Vercel
+.vercel/

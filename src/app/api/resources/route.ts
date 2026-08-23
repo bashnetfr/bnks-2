@@ -1,0 +1,16 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getResources } from '@/lib/resources'
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const type = searchParams.get('type') ?? undefined
+  const schoolId = searchParams.get('schoolId') ?? undefined
+
+  const resources = getResources({ type, schoolId })
+
+  return NextResponse.json({
+    success: true,
+    data: resources,
+    count: resources.length,
+  })
+}
