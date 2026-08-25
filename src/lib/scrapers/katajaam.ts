@@ -26,7 +26,7 @@ const INCLUDE =
 
 /** Non-tech happenings that often mention tech words in passing */
 const EXCLUDE =
-  /\b(auto\s?show|concert|reggae|bhajan|kathak|theatre|theater|embroidery|fashion|\bmusic\b|\bdance\b|comedy|food\s?festival|club\s?night|party|yoga|trekking)\b/i
+  /\b(auto\s?show|concert|reggae|bhajan|kathak|theatre|theater|embroidery|fashion|\bmusic\b|\bdance\b|comedy|food\s?festival|club\s?night|party|yoga|trekking|animal\s+rights)\b/i
 
 function isTechRelevant(title: string, description: string | undefined): boolean {
   const haystack = `${title} ${description ?? ''}`
