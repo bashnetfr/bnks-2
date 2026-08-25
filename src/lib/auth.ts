@@ -4,6 +4,8 @@ export interface StudentAuth {
   authMethod: AuthMethod
   studentEmail?: string
   schoolCode: string
+  /** District of the student's school (from school_profiles at login) */
+  schoolDistrict?: string
 }
 
 const STORAGE_KEY = 'edufit_student_auth'
@@ -32,6 +34,8 @@ export interface StaffAuth {
   role: StaffRole
   staffEmail?: string
   schoolCode: string
+  /** District of the teacher's school (from school_profiles at login) */
+  schoolDistrict?: string
 }
 
 const STAFF_STORAGE_KEY = 'edufit_staff_auth'
@@ -72,5 +76,14 @@ export function getEventsOwnerKey(): string | null {
   if (student) return student.studentEmail ?? `code:${student.schoolCode}`
   const staff = getStaffAuth()
   if (staff) return staff.staffEmail ?? `code:${staff.schoolCode}`
+  return null
+}
+
+/** District of the signed-in user's school, when known */
+export function getSchoolDistrict(): string | null {
+  const student = getStudentAuth()
+  if (student?.schoolDistrict) return student.schoolDistrict
+  const staff = getStaffAuth()
+  if (staff?.schoolDistrict) return staff.schoolDistrict
   return null
 }
