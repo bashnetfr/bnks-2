@@ -17,10 +17,10 @@ Any single mismatch → generic rejection: *"Invalid credentials. Check your ema
 
 | # | Role | Email | School Code | Personal Code | Lands on |
 |---|------|-------|-------------|---------------|----------|
-| 1 | Teacher | `teacher.ktm@edufit-test.edu.np` | `SCH-KTM-2026` | `TCH-KTM-001` | `/dashboard` |
-| 2 | Student | `student.ktm@edufit-test.edu.np` | `SCH-KTM-2026` | `STU-KTM-001` | `/survey` |
-| 3 | Teacher (2nd school) | `teacher.lal@edufit-test.edu.np` | `SCH-LAL-2026` | `TCH-LAL-001` | `/dashboard` |
-| 4 | Student (2nd school) | `student.lal@edufit-test.edu.np` | `SCH-LAL-2026` | `STU-LAL-001` | `/survey` |
+| 1 | Teacher | `teacher.ktm@edufit-test.edu.np` | `SCH-KTM-2026` | `TCH-KTM-001` | `/teacher` |
+| 2 | Student | `student.ktm@edufit-test.edu.np` | `SCH-KTM-2026` | `STU-KTM-001` | `/student` |
+| 3 | Teacher (2nd school) | `teacher.lal@edufit-test.edu.np` | `SCH-LAL-2026` | `TCH-LAL-001` | `/teacher` |
+| 4 | Student (2nd school) | `student.lal@edufit-test.edu.np` | `SCH-LAL-2026` | `STU-LAL-001` | `/student` |
 
 ## Rejection cases (must all fail)
 
@@ -38,8 +38,9 @@ Any single mismatch → generic rejection: *"Invalid credentials. Check your ema
 | Route | Allowed |
 |-------|---------|
 | `/login` | Public |
-| `/dashboard` | Authenticated **teachers** only |
-| `/survey` | Authenticated **students** only |
+| `/events` | Public (saving events requires login) |
+| `/teacher`, `/dashboard` | Authenticated **teachers** only |
+| `/student`, `/survey` | Authenticated **students** only |
 
 A valid session with the wrong role is signed out and redirected to `/login`.
 
