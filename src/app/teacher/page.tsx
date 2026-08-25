@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
   BarChart2, Users, ClipboardCheck, History, Brain, ShieldCheck,
-  Smartphone, Wifi, TriangleAlert, ClipboardList
+  Smartphone, Wifi, TriangleAlert, ClipboardList, UserPlus, Loader2
 } from 'lucide-react'
 import { createBrowserSupabaseClient } from '@/lib/supabase'
 import UserBadge from '@/components/UserBadge'
@@ -48,6 +48,24 @@ const LIMITATION_LABELS: Record<string, string> = {
   slow_internet: 'Slow internet',
 }
 
+interface StudentRecord {
+  id: string
+  full_name: string
+  email: string
+  access_code: string
+  grade_level: string | null
+  is_active: boolean
+  created_at: string
+}
+
+const GRADE_OPTIONS = [
+  { value: '', label: 'Not specified' },
+  { value: 'primary', label: 'Primary' },
+  { value: 'lower_secondary', label: 'Lower secondary' },
+  { value: 'secondary', label: 'Secondary' },
+  { value: 'higher_secondary', label: 'Higher secondary' },
+]
+
 function DistributionBar({ label, count, total }: { label: string; count: number; total: number }) {
   const pct = total > 0 ? Math.round((count / total) * 100) : 0
   return (
@@ -71,6 +89,75 @@ export default function TeacherDashboardPage() {
   const [challengeDist, setChallengeDist] = useState<Array<{ label: string; count: number }>>([])
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  // Student records (roster management)
+  const [students, setStudents] = useState<StudentRecord[]>([])
+  const [schoolCode, setSchoolCode] = useState('')
+  const [newName, setNewName] = useState('')
+  const [newEmail, setNewEmail] = useState('')
+  const [newGrade, setNewGrade] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [isAddingStudent, setIsAddingStudent] = useState(false)
+  const [studentError, setStudentError] = useState<string | null>(null)
+  const [createdCredentials, setCreatedCredentials] = useState<{ email: string; accessCode: string; tempPassword: string } | null>(null)
+
+  async function getAccessToken(): Promise<string | null> {
+    const supabase = createBrowserSupabaseClient()
+    const { data } = await supabase.auth.getSession()
+    return data.session?.access_token ?? null
+  }
+
+  async function loadRoster() {
+    const token = await getAccessToken()
+    if (!token) return
+    try {
+      const res = await fetch('/api/teacher/students', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const json = await res.json()
+      if (res.ok && json.success) {
+        setStudents(json.data.students as StudentRecord[])
+        setSchoolCode((json.data.schoolCode as string) ?? '')
+      }
+    } catch (e) {
+      console.warn('[teacher] roster load failed:', e)
+    }
+  }
+
+  async function handleAddStudent(e: React.FormEvent) {
+    e.preventDefault()
+    setIsAddingStudent(true)
+    setStudentError(null)
+    setCreatedCredentials(null)
+    try {
+      const token = await getAccessToken()
+      if (!token) {
+        setStudentError('Your session has expired. Please sign in again.')
+        return
+      }
+      const res = await fetch('/api/teacher/students', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ fullName: newName, email: newEmail, grade: newGrade, tempPassword: newPassword }),
+      })
+      const json = await res.json()
+      if (!res.ok || !json.success) {
+        setStudentError(json.error ?? 'Could not add the student record.')
+        return
+      }
+      setCreatedCredentials({
+        email: json.data.student.email,
+        accessCode: json.data.student.access_code,
+        tempPassword: json.data.tempPassword,
+      })
+      setNewName(''); setNewEmail(''); setNewGrade(''); setNewPassword('')
+      await loadRoster()
+    } catch {
+      setStudentError('Could not reach the server. Check your connection and try again.')
+    } finally {
+      setIsAddingStudent(false)
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -144,6 +231,7 @@ export default function TeacherDashboardPage() {
     }
 
     load()
+    loadRoster()
     return () => { cancelled = true }
   }, [])
 
@@ -174,6 +262,7 @@ export default function TeacherDashboardPage() {
         <nav className="sidebar-nav" aria-label="Teacher dashboard navigation">
           <a href="#" className="nav-item active"><ClipboardCheck size={16} aria-hidden="true" /> Dashboard</a>
           <Link href="/dashboard" className="nav-item"><ClipboardList size={16} aria-hidden="true" /> Readiness Assessment</Link>
+          <a href="#student-records" className="nav-item"><UserPlus size={16} aria-hidden="true" /> Student Records</a>
           <a href="#survey-insights" className="nav-item"><Users size={16} aria-hidden="true" /> Survey Insights</a>
         </nav>
         <div style={{ marginTop: 'auto', padding: '16px', borderTop: '1px solid var(--border)' }}>
@@ -233,6 +322,95 @@ export default function TeacherDashboardPage() {
             Students who have not completed this month&apos;s survey are asked to fill it in before they can open their student dashboard.
           </p>
         </div>
+
+        {/* Student records — add students to THIS school only */}
+        <section id="student-records">
+          <h2 style={{ fontSize: '18px', marginBottom: '16px' }}>Student Records</h2>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+            <div className="card" style={{ padding: '24px' }}>
+              <h3 style={{ fontSize: '15px', marginBottom: '12px' }}>Add a student</h3>
+              {studentError && (
+                <div className="badge badge-danger" style={{ width: '100%', padding: '8px 12px', marginBottom: '12px', borderRadius: '8px' }}>
+                  {studentError}
+                </div>
+              )}
+              {createdCredentials && (
+                <div className="badge badge-success" style={{ display: 'block', width: '100%', padding: '10px 12px', marginBottom: '12px', borderRadius: '8px', whiteSpace: 'normal', textAlign: 'left' }}>
+                  Student added. Login: <strong>{createdCredentials.email}</strong> · School code <strong>{schoolCode}</strong> ·
+                  Personal code <strong>{createdCredentials.accessCode}</strong> · Temp password <strong>{createdCredentials.tempPassword}</strong>
+                  <span className="meta-text" style={{ display: 'block', marginTop: '4px', fontSize: '11px' }}>
+                    Share these now — the password is not stored in plain text.
+                  </span>
+                </div>
+              )}
+              <form onSubmit={handleAddStudent}>
+                <div className="form-group">
+                  <label htmlFor="stu-name">Full name</label>
+                  <input id="stu-name" type="text" placeholder="e.g. Aarav Tamang" value={newName} onChange={(e) => setNewName(e.target.value)} required />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="stu-email">School email</label>
+                  <input id="stu-email" type="email" placeholder="student@school.edu.np" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} required />
+                </div>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label htmlFor="stu-grade">Grade</label>
+                    <select id="stu-grade" value={newGrade} onChange={(e) => setNewGrade(e.target.value)}>
+                      {GRADE_OPTIONS.map((g) => (
+                        <option key={g.value} value={g.value}>{g.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="stu-pass">Temporary password</label>
+                    <input id="stu-pass" type="text" placeholder="Min 8 characters" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength={8} />
+                  </div>
+                </div>
+                <button type="submit" disabled={isAddingStudent} className="btn-primary w-full" style={{ justifyContent: 'center', opacity: isAddingStudent ? 0.7 : 1 }}>
+                  {isAddingStudent ? (
+                    <><Loader2 size={15} className="animate-spin" aria-hidden="true" /> Creating record…</>
+                  ) : (
+                    <><UserPlus size={15} aria-hidden="true" /> Add student to my school</>
+                  )}
+                </button>
+              </form>
+            </div>
+
+            <div className="card" style={{ padding: '24px' }}>
+              <h3 style={{ fontSize: '15px', marginBottom: '12px' }}>Roster ({students.length})</h3>
+              {students.length === 0 ? (
+                <p className="meta-text">No student records yet for your school.</p>
+              ) : (
+                <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                    <thead>
+                      <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border)' }}>
+                        <th style={{ padding: '6px 8px 6px 0' }}>Name</th>
+                        <th style={{ padding: '6px 8px' }}>Code</th>
+                        <th style={{ padding: '6px 0 6px 8px' }}>Grade</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {students.map((student) => (
+                        <tr key={student.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                          <td style={{ padding: '7px 8px 7px 0' }}>
+                            {student.full_name}
+                            <span className="meta-text" style={{ display: 'block', fontSize: '11px' }}>{student.email}</span>
+                          </td>
+                          <td style={{ padding: '7px 8px', fontFamily: 'monospace' }}>{student.access_code}</td>
+                          <td style={{ padding: '7px 0 7px 8px' }} className="meta-text">
+                            {GRADE_OPTIONS.find((g) => g.value === (student.grade_level ?? ''))?.label ?? '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
 
         <section id="survey-insights">
           <div className="card" style={{ padding: '14px 20px', marginBottom: '20px', background: 'rgba(37, 99, 235, 0.04)', borderColor: 'var(--info)', display: 'flex', alignItems: 'center', gap: '10px' }}>
