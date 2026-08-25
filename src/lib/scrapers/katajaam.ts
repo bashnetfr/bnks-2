@@ -21,16 +21,16 @@ const META = {
 }
 
 /** Keep only listings plausibly relevant to students of tech/school competitions */
-const INCLUDE = [
-  'hackathon', 'coding', 'code', 'developer', 'devfest', 'pycon', 'tech', 'technology',
-  'ai ', ' ai', 'machine learning', 'robotics', 'startup', 'entrepreneur', 'innovation',
-  'cloud', 'cyber', 'security', 'ctf', 'data', 'it ', 'ict', 'engineering', 'science',
-  'math', 'olympiad', 'workshop', 'bootcamp', 'design', 'gamedev', 'game dev', 'iot',
-]
+const INCLUDE =
+  /\b(hackathon|hack\s?fest|coding|code\s?(contest|challenge|sprint)|programming|programmer|developer|devfest|pycon|technology|\btech\b|artificial\s+intelligence|\bAI\b|machine\s+learning|robotics|startup|entrepreneur|innovation|cybersecurity|\bcyber\b|\bcloud\b|\bctf\b|\biot\b|engineering|\bscience\b|\bstem\b|olympiad|bootcamp|game\s?dev|quiz|\bdebate\b|model\s+united\s+nations|digital\s+literacy)\b/i
+
+/** Non-tech happenings that often mention tech words in passing */
+const EXCLUDE =
+  /\b(auto\s?show|concert|reggae|bhajan|kathak|theatre|theater|embroidery|fashion|\bmusic\b|\bdance\b|comedy|food\s?festival|club\s?night|party|yoga|trekking)\b/i
 
 function isTechRelevant(title: string, description: string | undefined): boolean {
-  const haystack = `${title} ${description ?? ''}`.toLowerCase()
-  return INCLUDE.some((keyword) => haystack.includes(keyword))
+  const haystack = `${title} ${description ?? ''}`
+  return INCLUDE.test(haystack) && !EXCLUDE.test(haystack)
 }
 
 interface JsonLdEvent {
