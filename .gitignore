@@ -21,3 +21,12 @@ npm-debug.log*
 
 # Deployment and Vercel
 .vercel/
+
+# Android / Capacitor build artifacts (native sources ARE committed)
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+android/capacitor-cordova-android-plugins/
+*.apk
+*.aab
