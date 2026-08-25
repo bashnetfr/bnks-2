@@ -6,10 +6,10 @@ import {
   Search, MapPin, CalendarDays, Users, Trophy, Ticket,
   ShieldCheck, AlertTriangle, Bookmark, BookmarkCheck, Sparkles,
   ChevronDown, GraduationCap, Globe, Clock, CheckCircle2, XCircle,
-  Lock, LogIn, X
+  Lock, LogIn, X, RefreshCw
 } from 'lucide-react'
 import type { EducationLevel, Event, StudentEventProfile } from '@/lib/types'
-import { getEventsOwnerKey } from '@/lib/auth'
+import { getEventsOwnerKey, getStaffAuth, getStudentAuth } from '@/lib/auth'
 import {
   EVENTS, computeMatch, getEffectiveStatus, isActiveForDiscovery,
   isRegistrationOpen, getOrganizationById
@@ -126,7 +126,27 @@ export default function EventsPage() {
   // Profile panel visibility
   const [showProfilePanel, setShowProfilePanel] = useState(false)
 
+  // Live events (web-scraped). Curated data renders instantly and is
+  // replaced once a scrape run has populated the cache.
+  const [liveEvents, setLiveEvents] = useState<Event[] | null>(null)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [refreshNote, setRefreshNote] = useState<string | null>(null)
+
+  async function loadEventList(): Promise<void> {
+    try {
+      const res = await fetch('/api/events')
+      const json = await res.json()
+      if (res.ok && json.success && json.source === 'live' && Array.isArray(json.data)) {
+        setLiveEvents(json.data as Event[])
+      }
+    } catch (e) {
+      console.warn('[events] Live list unavailable — keeping curated data:', e)
+    }
+  }
+
   useEffect(() => {
+    loadEventList()
+
     // Identity comes from the platform session (student or staff login)
     const ownerKey = getEventsOwnerKey()
     setIsLoggedIn(ownerKey !== null)
@@ -157,6 +177,47 @@ export default function EventsPage() {
       cancelled = true
     }
   }, [])
+
+  // Default "Your district" to the signed-in user's school district.
+  // Never overrides a district the user already picked or saved.
+  useEffect(() => {
+    if (!isLoggedIn) return
+    const schoolCode = getStudentAuth()?.schoolCode ?? getStaffAuth()?.schoolCode
+    if (!schoolCode) return
+    async function prefillDistrict() {
+      try {
+        const res = await fetch(`/api/auth/school-district?code=${encodeURIComponent(schoolCode!)}`)
+        const json = await res.json()
+        if (res.ok && json.success && typeof json.data?.district === 'string') {
+          setProfile((prev) => (prev.location === '' ? { ...prev, location: json.data.district } : prev))
+        }
+      } catch (e) {
+        console.warn('[events] School district lookup failed:', e)
+      }
+    }
+    prefillDistrict()
+  }, [isLoggedIn])
+
+  async function refreshLiveEvents() {
+    setIsRefreshing(true)
+    setRefreshNote(null)
+    try {
+      const res = await fetch('/api/events/scrape?force=1')
+      const json = await res.json()
+      if (!res.ok || !json.success) {
+        setRefreshNote('Scrape failed — showing the last good data.')
+      } else if (json.replaced) {
+        setRefreshNote(`Live update complete — ${json.totalLiveEvents} events from Nepali sources.`)
+        await loadEventList()
+      } else {
+        setRefreshNote('Scrapers returned too few valid events — keeping previous data.')
+      }
+    } catch {
+      setRefreshNote('Could not reach the scraper — check your connection.')
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
 
   function requireLogin(): boolean {
     if (isLoggedIn) return true
@@ -223,7 +284,7 @@ export default function EventsPage() {
     })
   }
 
-  const activeEvents = useMemo(() => EVENTS.filter(isActiveForDiscovery), [])
+  const activeEvents = useMemo(() => (liveEvents ?? EVENTS).filter(isActiveForDiscovery), [liveEvents])
 
   const districts = useMemo(
     () => Array.from(new Set(activeEvents.map((e) => e.district))).sort(),
@@ -280,6 +341,21 @@ export default function EventsPage() {
           One student-first place to discover what&apos;s happening, who can join, what it costs,
           and when registration closes. Every listing carries its source and verification status.
         </p>
+        <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+          <button
+            type="button"
+            onClick={refreshLiveEvents}
+            disabled={isRefreshing}
+            className="btn-secondary"
+            style={{ justifyContent: 'center', padding: '9px 18px', fontSize: '13px' }}
+          >
+            <RefreshCw size={14} className={isRefreshing ? 'animate-spin' : undefined} aria-hidden="true" />
+            {isRefreshing ? 'Scanning Nepali event sources…' : 'Refresh live events'}
+          </button>
+          {refreshNote && (
+            <span className="meta-text" role="status">{refreshNote}</span>
+          )}
+        </div>
       </section>
 
       {/* Search + category chips */}
@@ -486,11 +562,16 @@ export default function EventsPage() {
               const open = isRegistrationOpen(event)
               const verification = VERIFICATION_BADGES[event.verificationStatus]
               const isSaved = savedIds.includes(event.id)
+              const isLive = event.sourceType.startsWith('web_scrape:')
+              const detailHref = isLive ? (event.registrationUrl || event.sourceUrl) : `/events/${event.id}`
 
               return (
                 <div key={event.id} className="card" style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <div className="flex items-center justify-between" style={{ flexWrap: 'wrap', gap: '6px' }}>
                     <span className="meta-text">
+                      {isLive && (
+                        <span className="badge badge-info" style={{ marginRight: '6px', fontSize: '10px' }}>LIVE</span>
+                      )}
                       {TYPE_LABELS[event.eventType]} · {event.location}
                     </span>
                     <span
@@ -501,7 +582,11 @@ export default function EventsPage() {
                     </span>
                   </div>
 
-                  <Link href={`/events/${event.id}`} style={{ textDecoration: 'none' }}>
+                  <Link
+                    href={detailHref}
+                    style={{ textDecoration: 'none' }}
+                    {...(isLive ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                  >
                     <h3 style={{ color: 'var(--text-primary)', lineHeight: 1.35 }}>{event.title}</h3>
                   </Link>
 
@@ -564,8 +649,13 @@ export default function EventsPage() {
                       >
                         {isSaved ? <BookmarkCheck size={17} aria-hidden="true" /> : <Bookmark size={17} aria-hidden="true" />}
                       </button>
-                      <Link href={`/events/${event.id}`} className="btn-primary" style={{ padding: '8px 16px', fontSize: '13px' }}>
-                        View Event
+                      <Link
+                        href={detailHref}
+                        className="btn-primary"
+                        style={{ padding: '8px 16px', fontSize: '13px' }}
+                        {...(isLive ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                      >
+                        {isLive ? 'Open Source Page' : 'View Event'}
                       </Link>
                     </div>
                   </div>
