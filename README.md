@@ -124,6 +124,17 @@ supabase/
 
 ---
 
+## Install on your phone (PWA)
+
+Ed-Vantage is an installable Progressive Web App. On Android:
+
+1. Open `https://bnks-2.vercel.app/` in Chrome
+2. Tap the **⋮** menu → **Add to Home screen** / **Install app**
+
+The app launches full-screen from its own icon like a native app.
+
+---
+
 ## Notes
 
 - The compatibility engine is deterministic by design — see CLAUDE.md for the architecture rules this repo follows.
