@@ -65,6 +65,8 @@ These are non-negotiable architecture rules, not style preferences. Violating th
 - **Backend**: Supabase (via `@supabase/supabase-js`)
 - **Styling**: Tailwind CSS via PostCSS — color tokens are already defined in `globals.css`/Tailwind config (a calm, institutional, teal-leaning palette). Follow the existing palette; don't introduce new colors ad hoc.
 - **Environment Variables**: Configured in `.env.example`
+- **AI**: NVIDIA NIM's llama-3.3-70b-instruct
+-**algo**: Education technology readibility index
 
 ## Supabase Integration
 
