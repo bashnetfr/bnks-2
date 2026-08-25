@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase'
-import { applyFilters } from '@/lib/events'
+import { EVENTS, applyFilters } from '@/lib/events'
 import type { Event } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
   const liveEvents = await loadLiveEvents()
   const source = liveEvents.length > 0 ? 'live' : 'curated'
 
-  const events = applyFilters(liveEvents.length > 0 ? liveEvents : [], {
+  const events = applyFilters(liveEvents.length > 0 ? liveEvents : EVENTS, {
     q: searchParams.get('q') ?? undefined,
     eventType: searchParams.get('type') ?? undefined,
     district: searchParams.get('district') ?? undefined,
