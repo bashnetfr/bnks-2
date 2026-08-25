@@ -981,8 +981,9 @@ export interface EventFilters {
   openOnly?: boolean
 }
 
-export function filterEvents(filters: EventFilters): Event[] {
-  let list = EVENTS.filter(isActiveForDiscovery)
+/** Apply discovery filters to an arbitrary event list (curated or live-scraped) */
+export function applyFilters(events: Event[], filters: EventFilters): Event[] {
+  let list = events.filter(isActiveForDiscovery)
 
   if (filters.q) {
     const q = filters.q.toLowerCase()
@@ -1018,6 +1019,10 @@ export function filterEvents(filters: EventFilters): Event[] {
   }
 
   return list.sort((a, b) => a.registrationDeadline.localeCompare(b.registrationDeadline))
+}
+
+export function filterEvents(filters: EventFilters): Event[] {
+  return applyFilters(EVENTS, filters)
 }
 
 // ---------------------------------------------------------------
