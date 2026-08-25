@@ -291,6 +291,21 @@ export default function EventsPage() {
     [activeEvents]
   )
 
+  // Personalization dropdown: common districts + every district that
+  // actually appears in events + the user's own school district, so a
+  // prefilled location is always a selectable option.
+  const profileDistrictOptions = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          'Kathmandu', 'Lalitpur', 'Bhaktapur', 'Kaski',
+          ...districts,
+          ...(profile.location ? [profile.location] : []),
+        ])
+      ).sort(),
+    [districts, profile.location]
+  )
+
   const filtered = useMemo(() => {
     let list = activeEvents
 
@@ -491,7 +506,7 @@ export default function EventsPage() {
                     onChange={(e) => updateProfile({ location: e.target.value })}
                   >
                     <option value="">Anywhere in Nepal</option>
-                    {['Kathmandu', 'Lalitpur', 'Bhaktapur', 'Kaski'].map((d) => (
+                    {profileDistrictOptions.map((d) => (
                       <option key={d} value={d}>{d}</option>
                     ))}
                   </select>
