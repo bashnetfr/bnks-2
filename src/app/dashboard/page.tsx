@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import {
   LayoutDashboard, School, FileText, CheckCircle2,
@@ -234,7 +235,7 @@ export default function DashboardPage() {
       <aside className="sidebar">
         <div className="sidebar-logo">
           <Link href="/" className="nav-logo">
-            <BarChart2 size={20} style={{ color: 'var(--primary)' }} />
+            <Image src="/logo.png" alt="" width={22} height={22} />
             Ed-<span className="logo-accent">Vantage</span>
           </Link>
           <div className="meta-text" style={{ fontSize: '11px', marginTop: '4px' }}>

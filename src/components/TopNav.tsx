@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { BarChart2, BookOpen, ChevronRight } from 'lucide-react'
+import { BookOpen, ChevronRight } from 'lucide-react'
 
 export default function TopNav() {
   const pathname = usePathname()
@@ -19,7 +20,7 @@ export default function TopNav() {
   return (
     <nav className="top-nav" role="navigation" aria-label="Main navigation">
       <Link href="/" className="nav-logo">
-        <BarChart2 size={20} style={{ color: 'var(--primary)' }} aria-hidden="true" />
+        <Image src="/logo.png" alt="" width={22} height={22} priority aria-hidden="true" />
         <span>Ed-<span className="logo-accent">Vantage</span></span>
       </Link>
 

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   BarChart2, CheckCircle, Shield, Users, BookOpen,
   ArrowRight, Star, Zap, Globe, ChevronDown
@@ -529,7 +530,7 @@ export default function HomePage() {
           }}
         >
           <div className="nav-logo">
-            <BarChart2 size={16} style={{ color: 'var(--primary)' }} aria-hidden="true" />
+            <Image src="/logo.png" alt="" width={18} height={18} aria-hidden="true" />
             Ed-<span className="logo-accent">Vantage</span>
           </div>
           <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>

@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import {
-  BarChart2, ShieldCheck, CheckCircle2, Award,
+  ShieldCheck, CheckCircle2, Award,
   ExternalLink, Sparkles, Smartphone, Wifi, Clock, Lock,
   CalendarDays, MapPin, MessageCircle
 } from 'lucide-react'
@@ -138,7 +139,7 @@ export default function StudentSurveyPage() {
       <aside className="sidebar">
         <div className="sidebar-logo">
           <Link href="/" className="nav-logo">
-            <BarChart2 size={20} style={{ color: 'var(--primary)' }} aria-hidden="true" />
+            <Image src="/logo.png" alt="" width={22} height={22} aria-hidden="true" />
             <span>Ed-<span className="logo-accent">Vantage</span></span>
           </Link>
           <div className="meta-text" style={{ fontSize: '11px', marginTop: '4px' }}>

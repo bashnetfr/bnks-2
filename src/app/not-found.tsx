@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { BarChart2, ArrowLeft } from 'lucide-react'
+import Image from 'next/image'
+import { ArrowLeft } from 'lucide-react'
 
 export default function NotFound() {
   return (
@@ -43,7 +44,7 @@ export default function NotFound() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
         <Link href="/" className="btn-primary">
-          <BarChart2 size={14} aria-hidden="true" />
+          <Image src="/logo.png" alt="" width={14} height={14} aria-hidden="true" />
           Back to Ed-Vantage
         </Link>
         <Link href="/dashboard" className="btn-secondary" style={{ fontSize: '13px' }}>

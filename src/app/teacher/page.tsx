@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import {
-  BarChart2, Users, ClipboardCheck, History, Brain, ShieldCheck,
+  Users, ClipboardCheck, History, Brain, ShieldCheck,
   Smartphone, Wifi, TriangleAlert, ClipboardList, UserPlus, Loader2
 } from 'lucide-react'
 import { createBrowserSupabaseClient } from '@/lib/supabase'
@@ -256,7 +257,7 @@ export default function TeacherDashboardPage() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="sidebar-logo">
-          <BarChart2 size={20} style={{ color: 'var(--primary)' }} aria-hidden="true" />
+          <Image src="/logo.png" alt="" width={22} height={22} aria-hidden="true" />
           <span>Ed-<span className="logo-accent">Vantage</span></span>
         </div>
         <nav className="sidebar-nav" aria-label="Teacher dashboard navigation">

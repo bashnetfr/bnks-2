@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import {
-  BarChart2, GraduationCap, BookOpen, CheckCircle2, Smartphone, Wifi,
+  GraduationCap, BookOpen, CheckCircle2, Smartphone, Wifi,
   Clock, Brain, MonitorSmartphone, CalendarClock, Award, ExternalLink,
   ShieldCheck, Home
 } from 'lucide-react'
@@ -147,7 +148,7 @@ export default function StudentDashboardPage() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="sidebar-logo">
-          <BarChart2 size={20} style={{ color: 'var(--primary)' }} aria-hidden="true" />
+          <Image src="/logo.png" alt="" width={22} height={22} aria-hidden="true" />
           <span>Ed-<span className="logo-accent">Vantage</span></span>
         </div>
         <nav className="sidebar-nav" aria-label="Student dashboard navigation">
