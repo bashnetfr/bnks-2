@@ -1,7 +1,9 @@
 // ================================================================
-// POST /api/teacher/students — create a student record for the
+// /api/teacher/students — student roster management for the
 // signed-in teacher's OWN school (school scoping resolved server-side
 // from the caller's session token, never trusted from the body).
+//   GET  — list that school's student records
+//   POST — create a student record + login account
 // ================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -9,6 +11,45 @@ import { createServerSupabaseClient } from '@/lib/supabase'
 import { resolveTeacher } from '@/lib/server-auth'
 
 export const dynamic = 'force-dynamic'
+
+export async function GET(request: NextRequest) {
+  const teacher = await resolveTeacher(request)
+  if (!teacher) {
+    return NextResponse.json(
+      { success: false, error: 'Teacher authentication required.' },
+      { status: 401 }
+    )
+  }
+
+  let supabase
+  try {
+    supabase = createServerSupabaseClient()
+  } catch {
+    return NextResponse.json(
+      { success: false, error: 'Server is not configured for privileged operations.' },
+      { status: 500 }
+    )
+  }
+
+  const { data, error } = await supabase
+    .from('school_members')
+    .select('id, full_name, email, access_code, grade_level, is_active, created_at')
+    .eq('school_id', teacher.schoolId)
+    .eq('member_role', 'student')
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json({
+    success: true,
+    data: {
+      schoolCode: teacher.schoolCode,
+      students: data ?? [],
+    },
+  })
+}
 
 interface CreateStudentBody {
   fullName?: unknown
