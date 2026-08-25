@@ -8,6 +8,7 @@
 // ================================================================
 
 import { createServerSupabaseClient } from '@/lib/supabase'
+import { NextResponse } from 'next/server'
 
 export interface TeacherIdentity {
   userId: string
@@ -22,6 +23,35 @@ function extractBearerToken(request: Request): string | null {
   const header = request.headers.get('authorization') ?? ''
   const match = header.match(/^Bearer\s+(.+)$/i)
   return match ? match[1].trim() : null
+}
+
+/** Length-safe equality that does not leak length differences on early exit */
+function keysMatch(provided: string, expected: string): boolean {
+  if (provided.length !== expected.length) return false
+  let diff = 0
+  for (let i = 0; i < expected.length; i++) {
+    diff |= provided.charCodeAt(i) ^ expected.charCodeAt(i)
+  }
+  return diff === 0
+}
+
+/**
+ * Guard for boss-level admin routes: requires the exact ADMIN_SECRET_KEY
+ * in the x-admin-key header. Returns an error response when rejected.
+ */
+export function requireAdminKey(request: Request): NextResponse | null {
+  const expected = process.env.ADMIN_SECRET_KEY
+  if (!expected) {
+    return NextResponse.json(
+      { success: false, error: 'Admin access is not configured on this server.' },
+      { status: 503 }
+    )
+  }
+  const provided = request.headers.get('x-admin-key') ?? ''
+  if (!keysMatch(provided.trim(), expected)) {
+    return NextResponse.json({ success: false, error: 'Invalid admin key.' }, { status: 401 })
+  }
+  return null
 }
 
 /**
