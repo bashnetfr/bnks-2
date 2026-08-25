@@ -7,7 +7,9 @@ needs internet access.
 
 ## Prerequisites
 
-- JDK 17 (`JAVA_HOME` must point at it)
+- JDK 21 on PATH (Capacitor 8 targets Java 21). If `JAVA_HOME` points at JDK
+  17, override it for the build:
+  `$env:JAVA_HOME = 'C:\Program Files\Java\jdk-21.x.x'`
 - Android SDK (installing [Android Studio](https://developer.android.com/studio)
   is the easiest way) with `ANDROID_HOME` set
 - Node dependencies: `npm install`
