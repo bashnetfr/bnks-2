@@ -1,6 +1,6 @@
 // ================================================================
 // Ed-Vantage — Single source of truth for all data shapes
-// MASTER_PROMPT.md §"Non-negotiable architecture" rule #4
+// docs/MASTER_PROMPT.md §"Non-negotiable architecture" rule #4
 // ================================================================
 
 // --- School Profile ---

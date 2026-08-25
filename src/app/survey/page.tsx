@@ -55,7 +55,7 @@ export default function StudentSurveyPage() {
   const [limitations, setLimitations] = useState<string[]>([])
   const [completedOnSharedDevice, setCompletedOnSharedDevice] = useState<boolean>(false)
 
-  // Submission state — NO OPTIMISTIC RENDERING (STUDENT_SURVEY_BUILD_PROMPT.md §Submission)
+  // Submission state — NO OPTIMISTIC RENDERING (docs/STUDENT_SURVEY_BUILD_PROMPT.md §Submission)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmittedConfirmed, setIsSubmittedConfirmed] = useState(false)
   const [submissionTime, setSubmissionTime] = useState<string | null>(null)

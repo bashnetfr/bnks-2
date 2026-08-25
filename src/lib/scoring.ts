@@ -1,7 +1,7 @@
 // ================================================================
 // Ed-Vantage — Compatibility / Readiness Scoring Engine
 //
-// MASTER_PROMPT.md §"Non-negotiable architecture" rule #1:
+// docs/MASTER_PROMPT.md §"Non-negotiable architecture" rule #1:
 //   Deterministic. Pure rule-based logic. ZERO AI/LLM/API calls.
 //   Same inputs → same outputs. Always.
 // ================================================================
@@ -24,7 +24,7 @@ import type {
 // ----------------------------------------------------------------
 
 /** Default score for any field that was skipped / left null.
- *  Per DASHBOARD_BUILD_PROMPT.md: do NOT default to 0 or 100.
+ *  Per docs/DASHBOARD_BUILD_PROMPT.md: do NOT default to 0 or 100.
  *  Use 50 (neutral) and add "incomplete data" to problems list. */
 const INCOMPLETE_DEFAULT: ReadinessLevel = 2
 

@@ -1,7 +1,7 @@
 // ================================================================
 // EduFit Nepal ΓÇö Curated Resource Hub Content
 //
-// RESOURCE_HUB_BUILD_PROMPT.md: hand-curated real content.
+// docs/RESOURCE_HUB_BUILD_PROMPT.md: hand-curated real content.
 // API-first so future apps can integrate via GET /api/resources.
 // No submission/approval workflow for MVP.
 // ================================================================

@@ -15,7 +15,7 @@ Primary users are NGOs, municipalities, and school networks doing due diligence 
 ### Gated authentication
 - Login (`/login`) requires **all four**: email + password + school code (`SCH-*`) + personal code (`TCH-*`/`STU-*`), validated server-side against preloaded `school_members`.
 - Establishes a real Supabase session on success so DB-backed pages work.
-- Seeded demo accounts with one-click fill buttons — see [TEST_ACCOUNTS.md](TEST_ACCOUNTS.md).
+- Seeded demo accounts with one-click fill buttons — see [docs/TEST_ACCOUNTS.md](docs/TEST_ACCOUNTS.md).
 
 ### Student portal
 - `/survey` — confidential monthly survey (device access, internet, study environment). Confirmed DB write before any success state.
@@ -87,7 +87,7 @@ npm run start    # serve production build
 npm run lint     # typecheck
 ```
 
-Demo logins are documented in [TEST_ACCOUNTS.md](TEST_ACCOUNTS.md) (shared password: `Test@2026`).
+Demo logins are documented in [docs/TEST_ACCOUNTS.md](docs/TEST_ACCOUNTS.md) (shared password: `Test@2026`).
 
 ---
 

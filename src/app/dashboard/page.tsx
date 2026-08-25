@@ -180,7 +180,7 @@ export default function DashboardPage() {
       studentSurveys
     )
 
-    // 2. Set result immediately to trigger inline results view without redirect (DASHBOARD_BUILD_PROMPT.md)
+    // 2. Set result immediately to trigger inline results view without redirect (docs/DASHBOARD_BUILD_PROMPT.md)
     setResult(engineResult)
     setActiveTab('results')
 
@@ -230,7 +230,7 @@ export default function DashboardPage() {
 
   return (
     <div className="app-shell">
-      {/* Sidebar Navigation — intelOS style (colorscheme.md §9) */}
+      {/* Sidebar Navigation — intelOS style (docs/colorscheme.md §9) */}
       <aside className="sidebar">
         <div className="sidebar-logo">
           <Link href="/" className="nav-logo">
@@ -709,7 +709,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* 2. Reality Gap Alert Banner (CLAUDE.md & MASTER_PROMPT.md §3) */}
+                {/* 2. Reality Gap Alert Banner (CLAUDE.md & docs/MASTER_PROMPT.md §3) */}
                 {result.realityGapFlag && (
                   <div
                     className="card"
@@ -735,7 +735,7 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                {/* 3. Dimension Subscores with Transparency Tooltips (DASHBOARD_BUILD_PROMPT.md §Results) */}
+                {/* 3. Dimension Subscores with Transparency Tooltips (docs/DASHBOARD_BUILD_PROMPT.md §Results) */}
                 <div className="card" style={{ padding: '28px', marginBottom: '24px' }}>
                   <h3 style={{ fontSize: '16px', marginBottom: '20px' }}>
                     ETRI Dimension Breakdown & Transparency Tooltips
@@ -811,7 +811,7 @@ export default function DashboardPage() {
                   )}
                 </div>
 
-                {/* 5. AI Explanation Layer Output (AI_INTEGRATION_BUILD_PROMPT.md) */}
+                {/* 5. AI Explanation Layer Output (docs/AI_INTEGRATION_BUILD_PROMPT.md) */}
                 <div className="card" style={{ padding: '28px', marginBottom: '24px', borderLeft: '4px solid var(--primary)' }}>
                   <div className="flex items-center justify-between" style={{ marginBottom: '16px' }}>
                     <div className="flex items-center gap-2">
@@ -848,7 +848,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   ) : (
-                    /* FALLBACK CONTRACT (AI_INTEGRATION_BUILD_PROMPT.md §Non-negotiables) */
+                    /* FALLBACK CONTRACT (docs/AI_INTEGRATION_BUILD_PROMPT.md §Non-negotiables) */
                     <div style={{ padding: '16px', background: 'var(--surface-muted)', borderRadius: '8px' }}>
                       <p className="meta-text" style={{ marginBottom: '8px' }}>
                         ℹ️ <em>AI explanation service in offline fallback mode. Showing standard rule-based action plan:</em>

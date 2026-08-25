@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Read MASTER_PROMPT.md first** for full project context — positioning, business model direction, and every major decision. This file covers repo-level technical conventions only.
+**Read docs/MASTER_PROMPT.md first** for full project context — positioning, business model direction, and every major decision. This file covers repo-level technical conventions only.
 
 ## Project Overview
 
@@ -149,13 +149,13 @@ Apply in filename order; remote history must stay aligned with local filenames.
 
 ## Environment Variables
 
-- `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (server-only), `NVIDIA_NIM_API_KEY` (server-only — see AI_INTEGRATION_BUILD_PROMPT.md), `ADMIN_SECRET_KEY` (server-only — guards `/api/admin/*` and `/hq-control`)
+- `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (server-only), `NVIDIA_NIM_API_KEY` (server-only — see docs/AI_INTEGRATION_BUILD_PROMPT.md), `ADMIN_SECRET_KEY` (server-only — guards `/api/admin/*` and `/hq-control`)
 
 ## Website & Reliability Conventions
 
 Applies across the marketing site and the app itself, split by which prompt file owns which piece:
 
-- **SEO/technical hygiene** (marketing site only — see WEBSITE_POLISH_BUILD_PROMPT.md): custom 404, robots.txt, unique page titles + meta descriptions, social share image, alt text on all images, a real privacy policy (treat as required, not optional — this product collects real student data), thank-you page after any inquiry form, 5 real FAQs, internal links between marketing pages.
+- **SEO/technical hygiene** (marketing site only — see docs/WEBSITE_POLISH_BUILD_PROMPT.md): custom 404, robots.txt, unique page titles + meta descriptions, social share image, alt text on all images, a real privacy policy (treat as required, not optional — this product collects real student data), thank-you page after any inquiry form, 5 real FAQs, internal links between marketing pages.
 - **Deliberately not building**: maps/directions, local business schema (wrong schema type — this isn't a physical-location business), sticky "call now" mobile CTA and response-time promises (wrong register for a considered institutional buyer), breadcrumbs (site structure is too flat to need them), case studies/reviews populated with anything that isn't a real pilot yet.
 - **Action feedback**: every user-facing action (survey submit, assessment submit) needs a confirmed completion state — no dead ends requiring manual navigation.
 - **Skeleton loaders + caching**: treat as a real priority, not polish — actual users are on slow/unreliable school connections.
@@ -169,7 +169,7 @@ Applies across the marketing site and the app itself, split by which prompt file
 - No testing framework currently configured. **Priority**: `scoring.ts` is the highest-risk file in the codebase — add sanity-check tests against known scenarios (see ENGINE_BUILD_PROMPT.md) even before a formal framework is wired up.
 
 ### AI Features
-- Template-based explanation system in `src/lib/ai.ts`, designed for NVIDIA NIM (Nemotron) integration — see AI_INTEGRATION_BUILD_PROMPT.md for the actual wiring.
+- Template-based explanation system in `src/lib/ai.ts`, designed for NVIDIA NIM (Nemotron) integration — see docs/AI_INTEGRATION_BUILD_PROMPT.md for the actual wiring.
 
 ## Development Best Practices
 

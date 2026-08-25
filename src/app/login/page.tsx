@@ -28,7 +28,7 @@ interface LoginResponse {
   }
 }
 
-// Seeded demo accounts (see TEST_ACCOUNTS.md / supabase/seed_test_accounts.sql)
+// Seeded demo accounts (see docs/TEST_ACCOUNTS.md / supabase/seed_test_accounts.sql)
 const DEMO_PASSWORD = 'Test@2026'
 const TEST_ACCOUNTS: Array<{
   label: string
@@ -299,7 +299,7 @@ export default function LoginPage() {
           ))}
         </div>
         <p className="meta-text" style={{ fontSize: '11px', marginTop: '10px' }}>
-          Full case matrix lives in TEST_ACCOUNTS.md. Password for all seeded accounts: <strong>{DEMO_PASSWORD}</strong>.
+          Full case matrix lives in docs/TEST_ACCOUNTS.md. Password for all seeded accounts: <strong>{DEMO_PASSWORD}</strong>.
           The disabled-account entry (*) is rejected by design.
         </p>
       </div>

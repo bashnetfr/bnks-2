@@ -1,17 +1,17 @@
 // ================================================================
 // Ed-Vantage — AI Explanation Layer
 //
-// MASTER_PROMPT.md §"Non-negotiable architecture" rule #2:
+// docs/MASTER_PROMPT.md §"Non-negotiable architecture" rule #2:
 //   This layer EXPLAINS. It never calculates, overrides, or
 //   contradicts a score. All numbers come from scoring.ts.
 //
-// AI_INTEGRATION_BUILD_PROMPT.md: NVIDIA NIM API, server-side only.
+// docs/AI_INTEGRATION_BUILD_PROMPT.md: NVIDIA NIM API, server-side only.
 // ================================================================
 
 import type { CompatibilityResult, ExplanationResult } from './types'
 
 // The fallback shape returned on any API failure.
-// DASHBOARD_BUILD_PROMPT.md: results screen must render the engine's
+// docs/DASHBOARD_BUILD_PROMPT.md: results screen must render the engine's
 // raw score and problems even if this call fails entirely.
 const FALLBACK: ExplanationResult = {
   explanation: null,
