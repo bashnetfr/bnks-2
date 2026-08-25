@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     // Step 1 — verify this email is a preloaded member with matching codes
     const { data: member, error: memberError } = await supabase
       .from('school_members')
-      .select('id, user_id, member_role, full_name, is_active, access_code, school:school_profiles(school_code)')
+      .select('id, user_id, member_role, full_name, is_active, access_code, school:school_profiles(school_code, district, location)')
       .eq('email', email)
       .maybeSingle()
 
@@ -64,13 +64,14 @@ export async function POST(request: Request) {
     }
 
     const schoolRow = Array.isArray(member?.school) ? member?.school[0] : member?.school
+    const schoolProfile = schoolRow as { school_code: string | null; district?: string | null; location?: string | null } | null
     const codesValid =
       !!member &&
       member.is_active === true &&
       member.member_role === role &&
       member.access_code === accessCode &&
-      !!schoolRow &&
-      (schoolRow as { school_code: string | null }).school_code === schoolCode
+      !!schoolProfile &&
+      schoolProfile.school_code === schoolCode
 
     if (!codesValid) {
       return NextResponse.json({ success: false, error: GENERIC_ERROR }, { status: 401 })
@@ -95,6 +96,7 @@ export async function POST(request: Request) {
         role: member.member_role,
         fullName: member.full_name,
         userId: data.user.id,
+        schoolDistrict: schoolProfile?.district ?? null,
       },
     })
   } catch (err) {
